@@ -15,15 +15,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-      - name: Download all coverage artifacts
+      - name: Download coverage from pytest
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
-          name: |
-            pytest-coverage
-            rust-llvm-cov
+          name: pytest-coverage
           path: .
-          merge-multiple: true
+
+      - name: Download coverage report from rust tests
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: rust-llvm-cov
+          path: .
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
