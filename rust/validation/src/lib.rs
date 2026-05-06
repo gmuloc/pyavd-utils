@@ -11,5 +11,5 @@ mod validation;
 pub use self::context::{Configuration, Context, ValidationResult};
 pub use self::validation::Validation;
 pub use self::validation::store::{
-    InputValidationResult, StoreValidate, StoreValidateInput, ValidationOutput,
+    InputValidationResult, StoreValidate, StoreValidateError, StoreValidateInput, ValidationOutput,
 };

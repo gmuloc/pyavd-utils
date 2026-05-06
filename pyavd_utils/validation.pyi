@@ -6,6 +6,27 @@
 from pathlib import Path
 from typing import Literal
 
+class PyAVDUtilsValidationError(Exception): ...
+class PyAVDUtilsValidationStoreNotInitializedError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationStoreAlreadyInitializedError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationStoreLoadError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationStoreLoadJsonError(PyAVDUtilsValidationStoreLoadError): ...
+class PyAVDUtilsValidationStoreLoadYamlError(PyAVDUtilsValidationStoreLoadError): ...
+class PyAVDUtilsValidationStoreLoadIoError(PyAVDUtilsValidationStoreLoadError): ...
+class PyAVDUtilsValidationStoreInvalidExtensionError(PyAVDUtilsValidationStoreLoadError): ...
+class PyAVDUtilsValidationStoreNoFilesFoundError(PyAVDUtilsValidationStoreLoadError): ...
+class PyAVDUtilsValidationSchemaResolveError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationSchemaTypeError(PyAVDUtilsValidationSchemaResolveError): ...
+class PyAVDUtilsValidationRefSyntaxError(PyAVDUtilsValidationSchemaResolveError): ...
+class PyAVDUtilsValidationSchemaPathError(PyAVDUtilsValidationSchemaResolveError): ...
+class PyAVDUtilsValidationSchemaStoreError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationInvalidSchemaNameError(PyAVDUtilsValidationSchemaStoreError): ...
+class PyAVDUtilsValidationSchemaWalkError(PyAVDUtilsValidationSchemaResolveError): ...
+class PyAVDUtilsValidationInvalidJsonDataError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationInvalidAdhocSchemaJsonError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationInvalidCoercedDataJsonError(PyAVDUtilsValidationError): ...
+class PyAVDUtilsValidationInternalError(PyAVDUtilsValidationError): ...
+
 class Configuration:
     """Configuration for validation behavior."""
 
@@ -86,7 +107,9 @@ def init_store_from_file(file: Path) -> None:
         file: Path to the json, yml or json.gz file holding the schema store.
 
     Raises:
-        RuntimeError: For any issue hit during loading, deserializing, combining and resolving schemas.
+        PyAVDUtilsValidationStoreLoadError: For issues hit during loading or deserializing schemas.
+        PyAVDUtilsValidationSchemaResolveError: For issues hit while resolving schemas.
+        PyAVDUtilsValidationStoreAlreadyInitializedError: If the write-once schema store was already initialized.
     """
 
 def validate_json(
@@ -104,6 +127,12 @@ def validate_json(
 
     Returns:
         ValidationResult holding lists of violations and deprecations.
+
+    Raises:
+        PyAVDUtilsValidationStoreNotInitializedError: If the schema store was not initialized.
+        PyAVDUtilsValidationInvalidSchemaNameError: If schema_name is not present in the schema store.
+        PyAVDUtilsValidationInvalidJsonDataError: If data_as_json is not valid JSON.
+        PyAVDUtilsValidationInternalError: If validation reports an internal error.
     """
 
 def get_validated_data(
@@ -123,6 +152,13 @@ def get_validated_data(
 
     Returns:
         ValidatedDataResult holding the validated data and the ValidationResult with lists of violations and deprecations.
+
+    Raises:
+        PyAVDUtilsValidationStoreNotInitializedError: If the schema store was not initialized.
+        PyAVDUtilsValidationInvalidSchemaNameError: If schema_name is not present in the schema store.
+        PyAVDUtilsValidationInvalidJsonDataError: If data_as_json is not valid JSON.
+        PyAVDUtilsValidationInvalidCoercedDataJsonError: If coerced data cannot be serialized as JSON.
+        PyAVDUtilsValidationInternalError: If validation reports an internal error.
     """
 
 def validate_json_with_adhoc_schema(
@@ -140,4 +176,10 @@ def validate_json_with_adhoc_schema(
 
     Returns:
         ValidationResult holding lists of violations and deprecations.
+
+    Raises:
+        PyAVDUtilsValidationStoreNotInitializedError: If the schema store was not initialized.
+        PyAVDUtilsValidationInvalidJsonDataError: If data_as_json is not valid JSON.
+        PyAVDUtilsValidationInvalidAdhocSchemaJsonError: If schema_as_json is not valid JSON.
+        PyAVDUtilsValidationInternalError: If validation reports an internal error.
     """

@@ -59,8 +59,9 @@ fn simple_7_encrypt_invalid_salt_err() {
             .call_method1("simple_7_encrypt", (password, Some(invalid_salt)))
             .unwrap_err();
 
-        // Maps Simple7Error::InvalidSaltValue -> PyValueError
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7InvalidSaltValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7Error>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsPasswordError>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Salt must be in the range 0-15, got 16"
@@ -73,7 +74,7 @@ fn simple_7_decrypt_data_too_short_err() {
     with_passwords_module(|py, module| {
         let err = module.call_method1("simple_7_decrypt", ("0",)).unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7DataTooShortError>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Encrypted data too short (minimum 2 characters required for salt)"
@@ -88,7 +89,7 @@ fn simple_7_decrypt_invalid_hex_err() {
             .call_method1("simple_7_decrypt", ("01GGGG",))
             .unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7InvalidHexEncodingError>(py));
         assert!(err.value(py).to_string().contains("Invalid hex encoding"));
     });
 }
@@ -100,7 +101,7 @@ fn simple_7_decrypt_invalid_salt_format_err() {
             .call_method1("simple_7_decrypt", ("XX1234",))
             .unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7InvalidSaltFormatError>(py));
         assert!(err.value(py).to_string().contains("Invalid salt format"));
     });
 }
@@ -112,7 +113,7 @@ fn simple_7_decrypt_salt_out_of_range_err() {
             .call_method1("simple_7_decrypt", ("161234",))
             .unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7InvalidSaltValueError>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Salt must be in the range 0-15, got 16"

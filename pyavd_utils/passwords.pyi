@@ -4,6 +4,27 @@
 # For now we allow docstrings in stubs
 # ruff: noqa: PYI021
 
+class PyAVDUtilsPasswordError(Exception): ...
+class PyAVDUtilsSha512CryptError(PyAVDUtilsPasswordError): ...
+class PyAVDUtilsSha512CryptInvalidSaltError(PyAVDUtilsSha512CryptError): ...
+class PyAVDUtilsSha512CryptInvalidSaltEmptyError(PyAVDUtilsSha512CryptInvalidSaltError): ...
+class PyAVDUtilsSha512CryptInvalidSaltCharacterError(PyAVDUtilsSha512CryptInvalidSaltError): ...
+class PyAVDUtilsSha512CryptLibraryError(PyAVDUtilsSha512CryptError): ...
+class PyAVDUtilsCBCError(PyAVDUtilsPasswordError): ...
+class PyAVDUtilsCBCInvalidBase64Error(PyAVDUtilsCBCError): ...
+class PyAVDUtilsCBCDecryptionFailedError(PyAVDUtilsCBCError): ...
+class PyAVDUtilsCBCInvalidSignatureError(PyAVDUtilsCBCError): ...
+class PyAVDUtilsCBCInvalidUtf8Error(PyAVDUtilsCBCError): ...
+class PyAVDUtilsCBCEncryptionFailedError(PyAVDUtilsCBCError): ...
+class PyAVDUtilsCBCInvalidBase64Utf8Error(PyAVDUtilsCBCError): ...
+class PyAVDUtilsSimple7Error(PyAVDUtilsPasswordError): ...
+class PyAVDUtilsSimple7InvalidSaltFormatError(PyAVDUtilsSimple7Error): ...
+class PyAVDUtilsSimple7InvalidHexEncodingError(PyAVDUtilsSimple7Error): ...
+class PyAVDUtilsSimple7RandomSourceUnavailableError(PyAVDUtilsSimple7Error): ...
+class PyAVDUtilsSimple7InvalidUtf8Error(PyAVDUtilsSimple7Error): ...
+class PyAVDUtilsSimple7InvalidSaltValueError(PyAVDUtilsSimple7Error): ...
+class PyAVDUtilsSimple7DataTooShortError(PyAVDUtilsSimple7Error): ...
+
 def sha512_crypt(password: str, salt: str) -> str:
     """
     Computes the SHA512 crypt value for the password given the salt.
@@ -18,7 +39,8 @@ def sha512_crypt(password: str, salt: str) -> str:
       The sha512 crypt value.
 
     Raises:
-      ValueError: If the salt is empty or contain invalid characters.
+      PyAVDUtilsSha512CryptInvalidSaltError: If the salt is empty or contains invalid characters.
+      PyAVDUtilsSha512CryptLibraryError: If the underlying SHA crypt library returns an error.
     """
 
 def cbc_encrypt(key: str, data: str) -> str:
@@ -33,7 +55,8 @@ def cbc_encrypt(key: str, data: str) -> str:
         str: The encrypted data, encoded in base64.
 
     Raises:
-      RunTimeError: If anything fails during encryption.
+      PyAVDUtilsCBCEncryptionFailedError: If encryption fails.
+      PyAVDUtilsCBCInvalidBase64Utf8Error: If base64 output contains invalid UTF-8.
     """
 
 def cbc_decrypt(key: str, encrypted_data: str) -> str:
@@ -48,8 +71,10 @@ def cbc_decrypt(key: str, encrypted_data: str) -> str:
         str: The decrypted data.
 
     Raises:
-      ValueError: If encrypted_data is not a valid base64 string.
-      RunTimeError: If anything fails during decryption.
+      PyAVDUtilsCBCInvalidBase64Error: If encrypted_data is not a valid base64 string.
+      PyAVDUtilsCBCDecryptionFailedError: If decryption fails.
+      PyAVDUtilsCBCInvalidSignatureError: If the decrypted Arista signature is invalid.
+      PyAVDUtilsCBCInvalidUtf8Error: If decrypted data is not valid UTF-8.
     """
 
 def cbc_verify(key: str, encrypted_data: str) -> str:
@@ -81,7 +106,7 @@ def simple_7_encrypt(data: str, salt: int | None) -> str:
         str: The encrypted password in type-7 format.
 
     Raises:
-        ValueError: If the salt is not in the range 0-15.
+        PyAVDUtilsSimple7InvalidSaltValueError: If the salt is not in the range 0-15.
     """
 
 def simple_7_decrypt(data: str) -> str:
@@ -98,6 +123,9 @@ def simple_7_decrypt(data: str) -> str:
         str: The decrypted password.
 
     Raises:
-        ValueError: If the encrypted data is invalid (too short, invalid format, invalid hex, or salt out of range).
-        RuntimeError: If the decrypted data is not valid UTF-8.
+        PyAVDUtilsSimple7DataTooShortError: If the encrypted data is too short.
+        PyAVDUtilsSimple7InvalidSaltFormatError: If the encrypted data has an invalid salt format.
+        PyAVDUtilsSimple7InvalidHexEncodingError: If the encrypted data has invalid hex encoding.
+        PyAVDUtilsSimple7InvalidSaltValueError: If the salt is out of range.
+        PyAVDUtilsSimple7InvalidUtf8Error: If the decrypted data is not valid UTF-8.
     """

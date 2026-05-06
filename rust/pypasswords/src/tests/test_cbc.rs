@@ -13,8 +13,9 @@ fn cbc_decrypt_invalid_base64_err() {
 
         let err = module.call_method1("cbc_decrypt", args).unwrap_err();
 
-        // Maps CbcError::InvalidBase64 -> PyValueError
-        assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCInvalidBase64Error>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsPasswordError>(py));
         assert_eq!(err.value(py).to_string(), "Invalid Base64 encoding");
     });
 }
@@ -29,7 +30,7 @@ fn cbc_decrypt_failed_err() {
 
         let err = module.call_method1("cbc_decrypt", args).unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyRuntimeError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCDecryptionFailedError>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Decryption failed (check password)"
@@ -44,7 +45,7 @@ fn cbc_decrypt_invalid_signature_err() {
         let args = ("some_key", "YWFhYWFhYWFhYWFhYWFhYQ==");
         let err = module.call_method1("cbc_decrypt", args).unwrap_err();
 
-        assert!(err.is_instance_of::<pyo3::exceptions::PyRuntimeError>(py));
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCInvalidSignatureError>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Invalid Arista signature in decrypted data"
