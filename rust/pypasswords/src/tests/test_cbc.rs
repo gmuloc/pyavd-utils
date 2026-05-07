@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 
 use super::*;
+use crate::passwords::ToPythonError as _;
 
 #[test]
 fn cbc_decrypt_invalid_base64_err() {
@@ -80,5 +81,24 @@ fn cbc_verify_returns_bool() {
             .extract()
             .unwrap();
         assert!(!is_invalid);
+    });
+}
+
+#[test]
+fn cbc_internal_errors_map_to_specific_pyerrs() {
+    with_passwords_module(|py, _module| {
+        let err = ::passwords::CbcError::InvalidUtf8.to_python_error();
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCInvalidUtf8Error>(py));
+        assert_eq!(
+            err.value(py).to_string(),
+            "Decrypted data is not valid UTF-8"
+        );
+
+        let err = ::passwords::CbcError::EncryptionFailed.to_python_error();
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsCBCEncryptionFailedError>(py));
+        assert_eq!(
+            err.value(py).to_string(),
+            "Encryption failed: internal block alignment error"
+        );
     });
 }

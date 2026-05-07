@@ -31,7 +31,7 @@ pub mod validation {
         Context, StoreValidateInput as _, Validation as _, feedback::InputDiagnostic,
     };
 
-    trait ToPythonError {
+    pub(crate) trait ToPythonError {
         fn to_python_error(self) -> pyo3::PyErr;
     }
 
@@ -432,17 +432,10 @@ pub mod validation {
             }
             debug!("pyvalidation::get_validated_data Validation Done");
             let validated_data = if output.document.result.errors.is_empty() {
-                output
-                    .document
-                    .coerced
-                    .map(|coerced| {
-                        serde_json::to_string(&coerced).map_err(|err| {
-                            PyAVDUtilsValidationInvalidCoercedDataJsonError::new_err(format!(
-                                "Invalid JSON in coerced data: {err}"
-                            ))
-                        })
-                    })
-                    .transpose()?
+                output.document.coerced.map(|coerced| {
+                    serde_json::to_string(&coerced)
+                        .expect("serde_json::Value should serialize as JSON")
+                })
             } else {
                 None
             };
@@ -494,7 +487,9 @@ mod tests {
     use super::{STORE, validation};
     use pyo3::types::PyAnyMethods as _;
 
-    use crate::validation::{ValidationResult, first_input_diagnostic_as_pyerr};
+    use crate::validation::{
+        ToPythonError as _, ValidationResult, first_input_diagnostic_as_pyerr,
+    };
 
     // Initializing python only once. Otherwise things may crash when running in multiple threads.
     // Also downloading the test schema and extracting to fragments.
@@ -631,6 +626,140 @@ mod tests {
             assert!(err.is_instance_of::<validation::PyAVDUtilsValidationInvalidJsonDataError>(py));
             assert!(err.is_instance_of::<validation::PyAVDUtilsValidationError>(py));
         });
+    }
+
+    #[test]
+    fn schema_resolver_errors_map_to_specific_pyerrs() {
+        setup_py();
+        pyo3::Python::attach(|py| {
+            let err = avdschema::SchemaResolverError::SchemaType(avdschema::SchemaType::new(
+                "schema_ref".into(),
+                "dict".into(),
+                "list".into(),
+            ))
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationSchemaTypeError>(py));
+            assert!(err.value(py).to_string().contains("Invalid schema type"));
+
+            let err = avdschema::SchemaResolverError::RefSyntax(avdschema::RefSyntax::new(
+                "bad_ref".into(),
+            ))
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationRefSyntaxError>(py));
+            assert!(err.value(py).to_string().contains("Invalid syntax"));
+
+            let err = avdschema::SchemaResolverError::SchemaPath(avdschema::SchemaPath::new(
+                "missing.path".into(),
+            ))
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationSchemaPathError>(py));
+            assert!(err.value(py).to_string().contains("was not found"));
+
+            let err = avdschema::SchemaResolverError::SchemaStoreError(
+                avdschema::SchemaStoreError::InvalidSchemaName("missing_schema".into()),
+            )
+            .to_python_error();
+            assert!(
+                err.is_instance_of::<validation::PyAVDUtilsValidationInvalidSchemaNameError>(py)
+            );
+
+            let err =
+                avdschema::SchemaResolverError::SchemaWalkError(
+                    avdschema::SchemaWalkError::InternalError(
+                        avdschema::SchemaWalkInternalError::new(),
+                    ),
+                )
+                .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationSchemaWalkError>(py));
+            assert!(err.value(py).to_string().contains("Internal error"));
+        });
+    }
+
+    #[test]
+    fn load_errors_map_to_specific_pyerrs() {
+        setup_py();
+        pyo3::Python::attach(|py| {
+            let err = avdschema::LoadError::JsonError(
+                serde_json::from_str::<serde_json::Value>("invalid").unwrap_err(),
+            )
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationStoreLoadJsonError>(py));
+
+            let err = avdschema::LoadError::YamlError(
+                serde_yaml::from_str::<serde_yaml::Value>(":").unwrap_err(),
+            )
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationStoreLoadYamlError>(py));
+
+            let err = avdschema::LoadError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "missing",
+            ))
+            .to_python_error();
+            assert!(err.is_instance_of::<validation::PyAVDUtilsValidationStoreLoadIoError>(py));
+
+            let err = avdschema::LoadError::InvalidExtension {}.to_python_error();
+            assert!(
+                err.is_instance_of::<validation::PyAVDUtilsValidationStoreInvalidExtensionError>(
+                    py
+                )
+            );
+
+            let err = avdschema::LoadError::NoFilesFound {}.to_python_error();
+            assert!(
+                err.is_instance_of::<validation::PyAVDUtilsValidationStoreNoFilesFoundError>(py)
+            );
+        });
+    }
+
+    #[test]
+    fn store_validate_error_maps_to_specific_pyerr() {
+        setup_py();
+        pyo3::Python::attach(|py| {
+            let err = ::validation::StoreValidateError::SchemaStore(
+                avdschema::SchemaStoreError::InvalidSchemaName("missing_schema".into()),
+            )
+            .to_python_error();
+
+            assert!(
+                err.is_instance_of::<validation::PyAVDUtilsValidationInvalidSchemaNameError>(py)
+            );
+        });
+    }
+
+    #[test]
+    fn validation_result_from_validation_result_maps_deprecation() {
+        let result = ::validation::ValidationResult {
+            errors: vec![],
+            warnings: vec![::validation::feedback::Feedback {
+                path: vec!["old_key".into()].into(),
+                span: None,
+                issue: ::validation::feedback::WarningIssue::Deprecated(
+                    ::validation::feedback::Deprecated {
+                        path: vec!["old_key".into()].into(),
+                        replacement: Some("new_key".to_string()).into(),
+                        version: Some("5.0.0".to_string()).into(),
+                        url: Some("https://example.invalid".to_string()).into(),
+                    },
+                ),
+            }],
+            infos: vec![],
+        };
+
+        let py_result = ValidationResult::from_validation_result(result).unwrap();
+
+        assert_eq!(py_result.deprecations.len(), 1);
+        assert_eq!(py_result.deprecations[0].path, vec!["old_key"]);
+        assert!(py_result.deprecations[0].message.contains("deprecated"));
+        assert_eq!(py_result.deprecations[0].version.as_deref(), Some("5.0.0"));
+        assert_eq!(
+            py_result.deprecations[0].replacement.as_deref(),
+            Some("new_key")
+        );
+        assert_eq!(
+            py_result.deprecations[0].url.as_deref(),
+            Some("https://example.invalid")
+        );
     }
 
     #[test]

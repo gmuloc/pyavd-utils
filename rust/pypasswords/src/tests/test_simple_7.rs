@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 
 use super::*;
+use crate::passwords::ToPythonError as _;
 
 #[test]
 fn simple_7_encrypt_decrypt_roundtrip() {
@@ -118,6 +119,31 @@ fn simple_7_decrypt_salt_out_of_range_err() {
             err.value(py).to_string(),
             "Salt must be in the range 0-15, got 16"
         );
+    });
+}
+
+#[test]
+fn simple_7_decrypt_invalid_utf8_err() {
+    with_passwords_module(|py, module| {
+        // Salt 0 uses seed byte 0x64. Encrypted byte 0x9b decrypts to 0xff,
+        // which is not a valid single-byte UTF-8 sequence.
+        let err = module
+            .call_method1("simple_7_decrypt", ("009B",))
+            .unwrap_err();
+
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7InvalidUtf8Error>(py));
+        assert!(err.value(py).to_string().contains("not valid UTF-8"));
+    });
+}
+
+#[test]
+fn simple_7_random_source_unavailable_maps_to_specific_pyerr() {
+    with_passwords_module(|py, _module| {
+        let err = ::passwords::Simple7Error::RandomSourceUnavailable(getrandom::Error::UNSUPPORTED)
+            .to_python_error();
+
+        assert!(err.is_instance_of::<passwords::PyAVDUtilsSimple7RandomSourceUnavailableError>(py));
+        assert!(err.value(py).to_string().contains("random salt"));
     });
 }
 

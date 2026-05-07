@@ -6,6 +6,8 @@ pub mod errors;
 pub mod resolve_ref;
 mod walker;
 
+pub use self::walker::{InternalError as SchemaWalkInternalError, SchemaWalkError};
+
 use crate::{any::AnySchema, inherit::Inherit, store::Store};
 
 use errors::{SchemaResolverError, SchemaType};

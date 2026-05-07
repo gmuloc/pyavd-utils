@@ -16,7 +16,7 @@ mod passwords {
         types::{PyModule, PyModuleMethods},
     };
 
-    trait ToPythonError {
+    pub(crate) trait ToPythonError {
         fn to_python_error(self) -> pyo3::PyErr;
     }
 
@@ -226,9 +226,7 @@ mod passwords {
     pub fn cbc_encrypt(password: String, data: String) -> PyResult<String> {
         let result_bytes = passwords::cbc_encrypt(password.as_bytes(), data.as_bytes())
             .map_err(ToPythonError::to_python_error)?;
-        String::from_utf8(result_bytes).map_err(|_| {
-            PyAVDUtilsCBCInvalidBase64Utf8Error::new_err("Base64 output contained invalid UTF-8")
-        })
+        Ok(String::from_utf8(result_bytes).expect("Base64 output should only contain ASCII"))
     }
 
     #[cfg(feature = "cbc")]
