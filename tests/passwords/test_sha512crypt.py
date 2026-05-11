@@ -9,19 +9,19 @@ import pytest
 
 from pyavd_utils.passwords import (
     PyAVDUtilsPasswordError,
-    PyAVDUtilsSha512CryptError,
-    PyAVDUtilsSha512CryptInvalidSaltCharacterError,
-    PyAVDUtilsSha512CryptInvalidSaltEmptyError,
-    PyAVDUtilsSha512CryptInvalidSaltError,
+    Sha512CryptError,
+    Sha512CryptInvalidSaltCharacterError,
+    Sha512CryptInvalidSaltEmptyError,
+    Sha512CryptInvalidSaltError,
     sha512_crypt,
 )
 
 
 def test_sha512_crypt_error_hierarchy() -> None:
     """Test that SHA512 crypt errors inherit from the passwords base error."""
-    assert issubclass(PyAVDUtilsSha512CryptError, PyAVDUtilsPasswordError)
-    assert issubclass(PyAVDUtilsSha512CryptInvalidSaltError, PyAVDUtilsSha512CryptError)
-    assert issubclass(PyAVDUtilsSha512CryptInvalidSaltEmptyError, PyAVDUtilsSha512CryptInvalidSaltError)
+    assert issubclass(Sha512CryptError, PyAVDUtilsPasswordError)
+    assert issubclass(Sha512CryptInvalidSaltError, Sha512CryptError)
+    assert issubclass(Sha512CryptInvalidSaltEmptyError, Sha512CryptInvalidSaltError)
 
 
 SHA512_CRYPT_TEST_DATA = [
@@ -36,14 +36,14 @@ SHA512_CRYPT_TEST_DATA = [
         "arista",
         "",
         "",
-        pytest.raises(PyAVDUtilsSha512CryptInvalidSaltEmptyError, match=r"Invalid Salt: Salt cannot be empty."),
+        pytest.raises(Sha512CryptInvalidSaltEmptyError, match=r"Invalid Salt: Salt cannot be empty."),
         id="Empty salt",
     ),
     pytest.param(
         "arista",
         "🐍",
         "",
-        pytest.raises(PyAVDUtilsSha512CryptInvalidSaltCharacterError, match="Invalid Salt: Salt contains an invalid character"),
+        pytest.raises(Sha512CryptInvalidSaltCharacterError, match="Invalid Salt: Salt contains an invalid character"),
         id="Invalid character in salt",
     ),
 ]

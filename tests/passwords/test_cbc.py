@@ -8,11 +8,11 @@ from contextlib import nullcontext as does_not_raise
 import pytest
 
 from pyavd_utils.passwords import (
-    PyAVDUtilsCBCDecryptionFailedError,
-    PyAVDUtilsCBCError,
-    PyAVDUtilsCBCInvalidBase64Error,
-    PyAVDUtilsCBCInvalidSignatureError,
-    PyAVDUtilsCBCInvalidUtf8Error,
+    CBCDecryptionFailedError,
+    CBCError,
+    CBCInvalidBase64Error,
+    CBCInvalidSignatureError,
+    CBCInvalidUtf8Error,
     PyAVDUtilsPasswordError,
     cbc_decrypt,
     cbc_encrypt,
@@ -22,8 +22,8 @@ from pyavd_utils.passwords import (
 
 def test_cbc_error_hierarchy() -> None:
     """Test that CBC errors inherit from the passwords base error."""
-    assert issubclass(PyAVDUtilsCBCError, PyAVDUtilsPasswordError)
-    assert issubclass(PyAVDUtilsCBCInvalidBase64Error, PyAVDUtilsCBCError)
+    assert issubclass(CBCError, PyAVDUtilsPasswordError)
+    assert issubclass(CBCInvalidBase64Error, CBCError)
 
 
 CBC_ENCRYPT_TEST_DATA = [
@@ -54,28 +54,28 @@ CBC_DECRYPT_TEST_DATA = [
         "any_key",
         "NotBase64!!!",
         "",
-        pytest.raises(PyAVDUtilsCBCInvalidBase64Error, match="Invalid Base64 encoding"),
+        pytest.raises(CBCInvalidBase64Error, match="Invalid Base64 encoding"),
         id="Invalid base64 input",
     ),
     pytest.param(
         "wrong_password",
         "bM7t58t04qSqLHAfZR/Szg==",
         "",
-        pytest.raises(PyAVDUtilsCBCInvalidSignatureError, match="Invalid Arista signature"),
+        pytest.raises(CBCInvalidSignatureError, match="Invalid Arista signature"),
         id="Wrong password (signature mismatch)",
     ),
     pytest.param(
         "any_key",
         "YWJjZA==",
         "",
-        pytest.raises(PyAVDUtilsCBCDecryptionFailedError, match="Decryption failed"),
+        pytest.raises(CBCDecryptionFailedError, match="Decryption failed"),
         id="Block size / Alignment failure",
     ),
     pytest.param(
         "42.42.42.42_passwd",
         "Sh5yjV8SD2j//////////9pkhd5VI3SbQDy17ujMdko=",
         "",
-        pytest.raises(PyAVDUtilsCBCInvalidUtf8Error, match="Decrypted data is not valid UTF-8"),
+        pytest.raises(CBCInvalidUtf8Error, match="Decrypted data is not valid UTF-8"),
         id="Invalid UTF-8 sequence in decrypted data",
     ),
 ]

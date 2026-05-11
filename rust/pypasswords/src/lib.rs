@@ -3,148 +3,187 @@
 // that can be found in the LICENSE file.
 #![deny(unused_crate_dependencies)]
 
-use pyo3::pymodule;
+use pyo3::{create_exception, exceptions::PyException, pymodule};
+
+create_exception!(
+    passwords,
+    PyAVDUtilsPasswordError,
+    PyException,
+    "Base exception for pyavd_utils.passwords."
+);
+create_exception!(
+    passwords,
+    Sha512CryptError,
+    PyAVDUtilsPasswordError,
+    "Base exception for SHA512 crypt errors."
+);
+create_exception!(
+    passwords,
+    Sha512CryptInvalidSaltError,
+    Sha512CryptError,
+    "Invalid SHA512 crypt salt."
+);
+create_exception!(
+    passwords,
+    Sha512CryptInvalidSaltEmptyError,
+    Sha512CryptInvalidSaltError,
+    "SHA512 crypt salt is empty."
+);
+create_exception!(
+    passwords,
+    Sha512CryptInvalidSaltCharacterError,
+    Sha512CryptInvalidSaltError,
+    "SHA512 crypt salt contains an invalid character."
+);
+create_exception!(
+    passwords,
+    Sha512CryptLibraryError,
+    Sha512CryptError,
+    "SHA512 crypt library error."
+);
+create_exception!(
+    passwords,
+    CBCError,
+    PyAVDUtilsPasswordError,
+    "Base exception for CBC password errors."
+);
+create_exception!(
+    passwords,
+    CBCInvalidBase64Error,
+    CBCError,
+    "CBC encrypted data is not valid Base64."
+);
+create_exception!(
+    passwords,
+    CBCDecryptionFailedError,
+    CBCError,
+    "CBC decryption failed."
+);
+create_exception!(
+    passwords,
+    CBCInvalidSignatureError,
+    CBCError,
+    "CBC decrypted data has an invalid Arista signature."
+);
+create_exception!(
+    passwords,
+    CBCInvalidUtf8Error,
+    CBCError,
+    "CBC decrypted data is not valid UTF-8."
+);
+create_exception!(
+    passwords,
+    CBCEncryptionFailedError,
+    CBCError,
+    "CBC encryption failed."
+);
+create_exception!(
+    passwords,
+    CBCInvalidBase64Utf8Error,
+    CBCError,
+    "CBC Base64 output is not valid UTF-8."
+);
+create_exception!(
+    passwords,
+    Simple7Error,
+    PyAVDUtilsPasswordError,
+    "Base exception for Type-7 password errors."
+);
+create_exception!(
+    passwords,
+    Simple7InvalidSaltFormatError,
+    Simple7Error,
+    "Type-7 encrypted data has an invalid salt format."
+);
+create_exception!(
+    passwords,
+    Simple7InvalidHexEncodingError,
+    Simple7Error,
+    "Type-7 encrypted data has invalid hex encoding."
+);
+create_exception!(
+    passwords,
+    Simple7RandomSourceUnavailableError,
+    Simple7Error,
+    "Type-7 random salt source is unavailable."
+);
+create_exception!(
+    passwords,
+    Simple7InvalidUtf8Error,
+    Simple7Error,
+    "Type-7 decrypted data is not valid UTF-8."
+);
+create_exception!(
+    passwords,
+    Simple7InvalidSaltValueError,
+    Simple7Error,
+    "Type-7 salt value is outside the supported range."
+);
+create_exception!(
+    passwords,
+    Simple7DataTooShortError,
+    Simple7Error,
+    "Type-7 encrypted data is too short."
+);
+create_exception!(
+    passwords,
+    Simple7EmptyPasswordError,
+    Simple7Error,
+    "Type-7 password is empty."
+);
 
 #[pymodule]
 #[pyo3(name = "passwords")]
 mod passwords {
 
-    use pyo3::{
-        Bound, PyResult, create_exception,
-        exceptions::PyException,
-        pyfunction,
-        types::{PyModule, PyModuleMethods},
-    };
+    use pyo3::{PyResult, pyfunction};
+
+    #[pymodule_export]
+    pub use super::CBCDecryptionFailedError;
+    #[pymodule_export]
+    pub use super::CBCEncryptionFailedError;
+    #[pymodule_export]
+    pub use super::CBCError;
+    #[pymodule_export]
+    pub use super::CBCInvalidBase64Error;
+    #[pymodule_export]
+    pub use super::CBCInvalidBase64Utf8Error;
+    #[pymodule_export]
+    pub use super::CBCInvalidSignatureError;
+    #[pymodule_export]
+    pub use super::CBCInvalidUtf8Error;
+    #[pymodule_export]
+    pub use super::PyAVDUtilsPasswordError;
+    #[pymodule_export]
+    pub use super::Sha512CryptError;
+    #[pymodule_export]
+    pub use super::Sha512CryptInvalidSaltCharacterError;
+    #[pymodule_export]
+    pub use super::Sha512CryptInvalidSaltEmptyError;
+    #[pymodule_export]
+    pub use super::Sha512CryptInvalidSaltError;
+    #[pymodule_export]
+    pub use super::Sha512CryptLibraryError;
+    #[pymodule_export]
+    pub use super::Simple7DataTooShortError;
+    #[pymodule_export]
+    pub use super::Simple7EmptyPasswordError;
+    #[pymodule_export]
+    pub use super::Simple7Error;
+    #[pymodule_export]
+    pub use super::Simple7InvalidHexEncodingError;
+    #[pymodule_export]
+    pub use super::Simple7InvalidSaltFormatError;
+    #[pymodule_export]
+    pub use super::Simple7InvalidSaltValueError;
+    #[pymodule_export]
+    pub use super::Simple7InvalidUtf8Error;
+    #[pymodule_export]
+    pub use super::Simple7RandomSourceUnavailableError;
 
     pub(crate) trait ToPythonError {
         fn to_python_error(self) -> pyo3::PyErr;
     }
-
-    macro_rules! define_python_exceptions {
-        ($module:ident, [$(($name:ident, $base:ty, $doc:literal)),+ $(,)?]) => {
-            $(
-                create_exception!($module, $name, $base, $doc);
-            )+
-
-            fn register_python_exceptions(m: &Bound<'_, PyModule>) -> PyResult<()> {
-                $(
-                    m.add(stringify!($name), m.py().get_type::<$name>())?;
-                )+
-                Ok(())
-            }
-        };
-    }
-
-    define_python_exceptions!(
-        passwords,
-        [
-            (
-                PyAVDUtilsPasswordError,
-                PyException,
-                "Base exception for pyavd_utils.passwords."
-            ),
-            (
-                PyAVDUtilsSha512CryptError,
-                PyAVDUtilsPasswordError,
-                "Base exception for SHA512 crypt errors."
-            ),
-            (
-                PyAVDUtilsSha512CryptInvalidSaltError,
-                PyAVDUtilsSha512CryptError,
-                "Invalid SHA512 crypt salt."
-            ),
-            (
-                PyAVDUtilsSha512CryptInvalidSaltEmptyError,
-                PyAVDUtilsSha512CryptInvalidSaltError,
-                "SHA512 crypt salt is empty."
-            ),
-            (
-                PyAVDUtilsSha512CryptInvalidSaltCharacterError,
-                PyAVDUtilsSha512CryptInvalidSaltError,
-                "SHA512 crypt salt contains an invalid character."
-            ),
-            (
-                PyAVDUtilsSha512CryptLibraryError,
-                PyAVDUtilsSha512CryptError,
-                "SHA512 crypt library error."
-            ),
-            (
-                PyAVDUtilsCBCError,
-                PyAVDUtilsPasswordError,
-                "Base exception for CBC password errors."
-            ),
-            (
-                PyAVDUtilsCBCInvalidBase64Error,
-                PyAVDUtilsCBCError,
-                "CBC encrypted data is not valid Base64."
-            ),
-            (
-                PyAVDUtilsCBCDecryptionFailedError,
-                PyAVDUtilsCBCError,
-                "CBC decryption failed."
-            ),
-            (
-                PyAVDUtilsCBCInvalidSignatureError,
-                PyAVDUtilsCBCError,
-                "CBC decrypted data has an invalid Arista signature."
-            ),
-            (
-                PyAVDUtilsCBCInvalidUtf8Error,
-                PyAVDUtilsCBCError,
-                "CBC decrypted data is not valid UTF-8."
-            ),
-            (
-                PyAVDUtilsCBCEncryptionFailedError,
-                PyAVDUtilsCBCError,
-                "CBC encryption failed."
-            ),
-            (
-                PyAVDUtilsCBCInvalidBase64Utf8Error,
-                PyAVDUtilsCBCError,
-                "CBC Base64 output is not valid UTF-8."
-            ),
-            (
-                PyAVDUtilsSimple7Error,
-                PyAVDUtilsPasswordError,
-                "Base exception for Type-7 password errors."
-            ),
-            (
-                PyAVDUtilsSimple7InvalidSaltFormatError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 encrypted data has an invalid salt format."
-            ),
-            (
-                PyAVDUtilsSimple7InvalidHexEncodingError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 encrypted data has invalid hex encoding."
-            ),
-            (
-                PyAVDUtilsSimple7RandomSourceUnavailableError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 random salt source is unavailable."
-            ),
-            (
-                PyAVDUtilsSimple7InvalidUtf8Error,
-                PyAVDUtilsSimple7Error,
-                "Type-7 decrypted data is not valid UTF-8."
-            ),
-            (
-                PyAVDUtilsSimple7InvalidSaltValueError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 salt value is outside the supported range."
-            ),
-            (
-                PyAVDUtilsSimple7DataTooShortError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 encrypted data is too short."
-            ),
-            (
-                PyAVDUtilsSimple7EmptyPasswordError,
-                PyAVDUtilsSimple7Error,
-                "Type-7 password is empty."
-            ),
-        ]
-    );
 
     #[cfg(feature = "sha512")]
     impl ToPythonError for passwords::Sha512CryptError {
@@ -152,13 +191,13 @@ mod passwords {
             let message = self.to_string();
             match self {
                 passwords::Sha512CryptError::InvalidSalt(passwords::InvalidSaltError::IsEmpty) => {
-                    PyAVDUtilsSha512CryptInvalidSaltEmptyError::new_err(message)
+                    Sha512CryptInvalidSaltEmptyError::new_err(message)
                 }
                 passwords::Sha512CryptError::InvalidSalt(
                     passwords::InvalidSaltError::InvalidCharacter(_),
-                ) => PyAVDUtilsSha512CryptInvalidSaltCharacterError::new_err(message),
+                ) => Sha512CryptInvalidSaltCharacterError::new_err(message),
                 passwords::Sha512CryptError::ShaCrypt(_) => {
-                    PyAVDUtilsSha512CryptLibraryError::new_err(message)
+                    Sha512CryptLibraryError::new_err(message)
                 }
             }
         }
@@ -169,19 +208,11 @@ mod passwords {
         fn to_python_error(self) -> pyo3::PyErr {
             let message = self.to_string();
             match self {
-                passwords::CbcError::InvalidBase64 => {
-                    PyAVDUtilsCBCInvalidBase64Error::new_err(message)
-                }
-                passwords::CbcError::DecryptionFailed => {
-                    PyAVDUtilsCBCDecryptionFailedError::new_err(message)
-                }
-                passwords::CbcError::InvalidSignature => {
-                    PyAVDUtilsCBCInvalidSignatureError::new_err(message)
-                }
-                passwords::CbcError::InvalidUtf8 => PyAVDUtilsCBCInvalidUtf8Error::new_err(message),
-                passwords::CbcError::EncryptionFailed => {
-                    PyAVDUtilsCBCEncryptionFailedError::new_err(message)
-                }
+                passwords::CbcError::InvalidBase64 => CBCInvalidBase64Error::new_err(message),
+                passwords::CbcError::DecryptionFailed => CBCDecryptionFailedError::new_err(message),
+                passwords::CbcError::InvalidSignature => CBCInvalidSignatureError::new_err(message),
+                passwords::CbcError::InvalidUtf8 => CBCInvalidUtf8Error::new_err(message),
+                passwords::CbcError::EncryptionFailed => CBCEncryptionFailedError::new_err(message),
             }
         }
     }
@@ -192,33 +223,26 @@ mod passwords {
             let message = self.to_string();
             match self {
                 passwords::Simple7Error::InvalidSaltFormat(_) => {
-                    PyAVDUtilsSimple7InvalidSaltFormatError::new_err(message)
+                    Simple7InvalidSaltFormatError::new_err(message)
                 }
                 passwords::Simple7Error::InvalidHexEncoding(_) => {
-                    PyAVDUtilsSimple7InvalidHexEncodingError::new_err(message)
+                    Simple7InvalidHexEncodingError::new_err(message)
                 }
                 passwords::Simple7Error::RandomSourceUnavailable(_) => {
-                    PyAVDUtilsSimple7RandomSourceUnavailableError::new_err(message)
+                    Simple7RandomSourceUnavailableError::new_err(message)
                 }
                 passwords::Simple7Error::InvalidUtf8(_) => {
-                    PyAVDUtilsSimple7InvalidUtf8Error::new_err(message)
+                    Simple7InvalidUtf8Error::new_err(message)
                 }
                 passwords::Simple7Error::InvalidSaltValue(_) => {
-                    PyAVDUtilsSimple7InvalidSaltValueError::new_err(message)
+                    Simple7InvalidSaltValueError::new_err(message)
                 }
-                passwords::Simple7Error::DataTooShort => {
-                    PyAVDUtilsSimple7DataTooShortError::new_err(message)
-                }
+                passwords::Simple7Error::DataTooShort => Simple7DataTooShortError::new_err(message),
                 passwords::Simple7Error::EmptyPassword => {
-                    PyAVDUtilsSimple7EmptyPasswordError::new_err(message)
+                    Simple7EmptyPasswordError::new_err(message)
                 }
             }
         }
-    }
-
-    #[pymodule_init]
-    fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
-        register_python_exceptions(m)
     }
 
     #[cfg(feature = "sha512")]

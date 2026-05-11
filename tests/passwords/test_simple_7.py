@@ -9,12 +9,12 @@ import pytest
 
 from pyavd_utils.passwords import (
     PyAVDUtilsPasswordError,
-    PyAVDUtilsSimple7DataTooShortError,
-    PyAVDUtilsSimple7EmptyPasswordError,
-    PyAVDUtilsSimple7Error,
-    PyAVDUtilsSimple7InvalidHexEncodingError,
-    PyAVDUtilsSimple7InvalidSaltFormatError,
-    PyAVDUtilsSimple7InvalidSaltValueError,
+    Simple7DataTooShortError,
+    Simple7EmptyPasswordError,
+    Simple7Error,
+    Simple7InvalidHexEncodingError,
+    Simple7InvalidSaltFormatError,
+    Simple7InvalidSaltValueError,
     simple_7_decrypt,
     simple_7_encrypt,
 )
@@ -22,9 +22,9 @@ from pyavd_utils.passwords import (
 
 def test_simple_7_error_hierarchy() -> None:
     """Test that Type-7 errors inherit from the passwords base error."""
-    assert issubclass(PyAVDUtilsSimple7Error, PyAVDUtilsPasswordError)
-    assert issubclass(PyAVDUtilsSimple7InvalidSaltValueError, PyAVDUtilsSimple7Error)
-    assert issubclass(PyAVDUtilsSimple7EmptyPasswordError, PyAVDUtilsSimple7Error)
+    assert issubclass(Simple7Error, PyAVDUtilsPasswordError)
+    assert issubclass(Simple7InvalidSaltValueError, Simple7Error)
+    assert issubclass(Simple7EmptyPasswordError, Simple7Error)
 
 
 SIMPLE_7_ENCRYPT_TEST_DATA = [
@@ -60,21 +60,21 @@ SIMPLE_7_ENCRYPT_TEST_DATA = [
         "test_password",
         16,
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 16"),
+        pytest.raises(Simple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 16"),
         id="Invalid salt value (16)",
     ),
     pytest.param(
         "test_password",
         99,
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 99"),
+        pytest.raises(Simple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 99"),
         id="Invalid salt value (99)",
     ),
     pytest.param(
         "",
         5,
         "",
-        pytest.raises(PyAVDUtilsSimple7EmptyPasswordError, match="Password must not be empty"),
+        pytest.raises(Simple7EmptyPasswordError, match="Password must not be empty"),
         id="Empty password",
     ),
 ]
@@ -115,37 +115,37 @@ SIMPLE_7_DECRYPT_TEST_DATA = [
     pytest.param(
         "",
         "",
-        pytest.raises(PyAVDUtilsSimple7DataTooShortError, match="Encrypted data too short"),
+        pytest.raises(Simple7DataTooShortError, match="Encrypted data too short"),
         id="Data too short (empty)",
     ),
     pytest.param(
         "0",
         "",
-        pytest.raises(PyAVDUtilsSimple7DataTooShortError, match="Encrypted data too short"),
+        pytest.raises(Simple7DataTooShortError, match="Encrypted data too short"),
         id="Data too short (1 char)",
     ),
     pytest.param(
         "01GGGG",
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidHexEncodingError, match="Invalid hex encoding"),
+        pytest.raises(Simple7InvalidHexEncodingError, match="Invalid hex encoding"),
         id="Invalid hex encoding",
     ),
     pytest.param(
         "XX1234",
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidSaltFormatError, match="Invalid salt format"),
+        pytest.raises(Simple7InvalidSaltFormatError, match="Invalid salt format"),
         id="Invalid salt format",
     ),
     pytest.param(
         "161234",
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 16"),
+        pytest.raises(Simple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 16"),
         id="Salt out of range (16)",
     ),
     pytest.param(
         "991234",
         "",
-        pytest.raises(PyAVDUtilsSimple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 99"),
+        pytest.raises(Simple7InvalidSaltValueError, match="Salt must be in the range 0-15, got 99"),
         id="Salt out of range (99)",
     ),
 ]

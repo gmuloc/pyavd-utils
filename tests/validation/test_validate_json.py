@@ -5,18 +5,18 @@ import pytest
 
 from pyavd_utils.validation import (
     PyAVDUtilsValidationError,
-    PyAVDUtilsValidationInvalidJsonDataError,
-    PyAVDUtilsValidationInvalidSchemaNameError,
-    PyAVDUtilsValidationSchemaStoreError,
+    ValidationInvalidJsonDataError,
+    ValidationInvalidSchemaNameError,
+    ValidationSchemaStoreError,
     validate_json,
 )
 
 
 def test_validation_error_hierarchy() -> None:
     """Test that validation errors inherit from the validation base error."""
-    assert issubclass(PyAVDUtilsValidationSchemaStoreError, PyAVDUtilsValidationError)
-    assert issubclass(PyAVDUtilsValidationInvalidSchemaNameError, PyAVDUtilsValidationSchemaStoreError)
-    assert issubclass(PyAVDUtilsValidationInvalidJsonDataError, PyAVDUtilsValidationError)
+    assert issubclass(ValidationSchemaStoreError, PyAVDUtilsValidationError)
+    assert issubclass(ValidationInvalidSchemaNameError, ValidationSchemaStoreError)
+    assert issubclass(ValidationInvalidJsonDataError, PyAVDUtilsValidationError)
 
 
 @pytest.mark.usefixtures("init_store")
@@ -38,13 +38,13 @@ def test_validate_json() -> None:
 
 @pytest.mark.usefixtures("init_store")
 def test_validate_json_invalid_schema_name_error() -> None:
-    with pytest.raises(PyAVDUtilsValidationInvalidSchemaNameError, match="Schema name 'invalid_schema' not found"):
+    with pytest.raises(ValidationInvalidSchemaNameError, match="Schema name 'invalid_schema' not found"):
         validate_json("{}", "invalid_schema")  # type: ignore[arg-type]
 
 
 @pytest.mark.usefixtures("init_store")
 def test_validate_json_invalid_json_data_error() -> None:
-    with pytest.raises(PyAVDUtilsValidationInvalidJsonDataError, match="Invalid JSON in data"):
+    with pytest.raises(ValidationInvalidJsonDataError, match="Invalid JSON in data"):
         validate_json("invalid_json", "eos_config")
 
 
