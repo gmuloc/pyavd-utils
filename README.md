@@ -40,6 +40,24 @@ We welcome contributions to the `pyavd-utils` project. As this is a performance-
 
 Please refer to the main [AVD GitHub repository](https://github.com/aristanetworks/avd) for general contribution guidelines.
 
+## Python Stub Generation
+
+Python type stub files in `pyavd_utils/*.pyi` are generated from the PyO3 exports with `pyo3-stub-gen`. The generated files are committed so Python type checkers can consume them directly from source distributions and wheels.
+
+Regenerate the stubs after changing exported PyO3 functions or classes:
+
+```bash
+make generate-stubs
+```
+
+Check that the committed stubs are up to date:
+
+```bash
+make check-stubs
+```
+
+Normal package builds still use ABI3 through the default `extension-module` feature on the PyO3 crates. The Make target builds the generator binaries with `RUSTFLAGS="--cfg pyavd_stubgen"` and `--no-default-features`; this enables stub metadata while temporarily disabling the ABI3 extension-module build mode, which is not compatible with `pyo3-stub-gen` in this workspace.
+
 ## License
 
 `pyavd-utils` is licensed under Apache2. See the [LICENSE](https://github.com/aristanetworks/pyavd-utils/blob/main/LICENSE) file for details.

@@ -53,35 +53,53 @@ pub mod validation {
 
     #[pyclass(frozen, get_all)]
     #[derive(Clone)]
+    /// Input data violates the schema.
     pub struct Violation {
+        /// String detailing the violation.
         pub message: String,
+        /// Path to the data which the violation concerns.
         pub path: Vec<String>,
     }
 
     #[pyclass(frozen, get_all)]
     #[derive(Clone)]
+    /// Input data model is deprecated.
     pub struct Deprecation {
+        /// String detailing the deprecation.
         pub message: String,
+        /// Path to the data which uses a deprecated data model.
         pub path: Vec<String>,
+        /// True when the data model is removed.
         pub removed: bool,
+        /// Version where the model will be removed.
         pub version: Option<String>,
+        /// New data model to use instead.
         pub replacement: Option<String>,
+        /// Url where more information can be found.
         pub url: Option<String>,
     }
 
     #[pyclass(frozen, get_all)]
     #[derive(Clone)]
+    /// EOS Config key found in AVD Design input.
     pub struct IgnoredEosConfigKey {
+        /// String detailing the ignored key.
         pub message: String,
+        /// Path to the ignored key.
         pub path: Vec<String>,
     }
 
     #[pyclass(get_all, set_all)]
     #[derive(Clone, Default)]
+    /// Configuration for validation behavior.
     pub struct Configuration {
+        /// Ignore required keys on the root dictionary.
         pub ignore_required_keys_on_root_dict: bool,
+        /// Return coercion information in the validation result.
         pub return_coercion_infos: bool,
+        /// Emit type errors for Null values instead of ignoring them.
         pub restrict_null_values: bool,
+        /// When validating avd_design, emit warnings for top-level keys that exist in eos_config but not in avd_design.
         pub warn_eos_config_keys: bool,
     }
 
@@ -118,6 +136,7 @@ pub mod validation {
 
     #[pyclass(frozen, get_all)]
     #[derive(Clone, Default)]
+    /// Result of data validation.
     pub struct ValidationResult {
         pub violations: Vec<Violation>,
         pub deprecations: Vec<Deprecation>,
@@ -168,9 +187,343 @@ pub mod validation {
     }
 
     #[pyclass(frozen, get_all)]
+    /// Result of data validation including the validated data as JSON.
     pub struct ValidatedDataResult {
         pub validation_result: ValidationResult,
         pub validated_data: Option<String>,
+    }
+
+    // The automatic class generator renders `get_all` fields as `@property`
+    // methods and PyO3 constructors as `__new__`. Submit manual class metadata
+    // to keep the public stubs compact and close to the hand-written style.
+    #[cfg(pyavd_stubgen)]
+    mod stub_classes {
+        use super::{
+            Configuration, Deprecation, IgnoredEosConfigKey, ValidatedDataResult, ValidationResult,
+            Violation,
+        };
+        use pyo3_stub_gen::{
+            PyStubType, TypeInfo,
+            inventory::submit,
+            type_info::{
+                MemberInfo, MethodInfo, MethodType, ParameterDefault, ParameterInfo, ParameterKind,
+                PyClassInfo, PyMethodsInfo,
+            },
+        };
+        use std::any::TypeId;
+
+        macro_rules! impl_stub_type {
+            ($type:ty, $name:literal) => {
+                impl PyStubType for $type {
+                    fn type_output() -> TypeInfo {
+                        TypeInfo::locally_defined($name, "validation".into())
+                    }
+                }
+
+                impl pyo3_stub_gen::runtime::PyRuntimeType for $type {
+                    fn runtime_type_object(
+                        py: pyo3::Python<'_>,
+                    ) -> pyo3::PyResult<pyo3::Bound<'_, pyo3::PyAny>> {
+                        Ok(py.get_type::<Self>().into_any())
+                    }
+                }
+            };
+        }
+
+        macro_rules! submit_class {
+            ($type:ty, $name:literal, $doc:literal, [$($attr:expr),* $(,)?]) => {
+                impl_stub_type!($type, $name);
+
+                submit! {
+                    PyClassInfo {
+                        struct_id: || TypeId::of::<$type>(),
+                        pyclass_name: $name,
+                        module: Some("validation"),
+                        doc: $doc,
+                        getters: &[],
+                        setters: &[],
+                        bases: &[],
+                        has_eq: false,
+                        has_ord: false,
+                        has_hash: false,
+                        has_str: false,
+                        subclass: true,
+                    }
+                }
+
+                submit! {
+                    PyMethodsInfo {
+                        struct_id: || TypeId::of::<$type>(),
+                        attrs: &[$($attr),*],
+                        getters: &[],
+                        setters: &[],
+                        methods: &[],
+                        file: file!(),
+                        line: line!(),
+                        column: column!(),
+                    }
+                }
+            };
+        }
+
+        fn default_false() -> String {
+            "False".to_string()
+        }
+
+        fn none_type() -> TypeInfo {
+            TypeInfo::none()
+        }
+
+        submit_class!(
+            Violation,
+            "Violation",
+            "Input data violates the schema.",
+            [
+                MemberInfo {
+                    name: "message",
+                    r#type: <String as PyStubType>::type_output,
+                    doc: "String detailing the violation.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "path",
+                    r#type: <Vec<String> as PyStubType>::type_output,
+                    doc: "Path to the data which the violation concerns.",
+                    default: None,
+                    deprecated: None,
+                },
+            ]
+        );
+
+        submit_class!(
+            Deprecation,
+            "Deprecation",
+            "Input data model is deprecated.",
+            [
+                MemberInfo {
+                    name: "message",
+                    r#type: <String as PyStubType>::type_output,
+                    doc: "String detailing the deprecation.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "path",
+                    r#type: <Vec<String> as PyStubType>::type_output,
+                    doc: "Path to the data which uses a deprecated data model.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "removed",
+                    r#type: <bool as PyStubType>::type_output,
+                    doc: "True when the data model is removed.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "version",
+                    r#type: <Option<String> as PyStubType>::type_output,
+                    doc: "Version where the model will be removed.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "replacement",
+                    r#type: <Option<String> as PyStubType>::type_output,
+                    doc: "New data model to use instead.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "url",
+                    r#type: <Option<String> as PyStubType>::type_output,
+                    doc: "Url where more information can be found.",
+                    default: None,
+                    deprecated: None,
+                },
+            ]
+        );
+
+        submit_class!(
+            IgnoredEosConfigKey,
+            "IgnoredEosConfigKey",
+            "EOS Config key found in AVD Design input.",
+            [
+                MemberInfo {
+                    name: "message",
+                    r#type: <String as PyStubType>::type_output,
+                    doc: "String detailing the ignored key.",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "path",
+                    r#type: <Vec<String> as PyStubType>::type_output,
+                    doc: "Path to the ignored key.",
+                    default: None,
+                    deprecated: None,
+                },
+            ]
+        );
+
+        impl_stub_type!(Configuration, "Configuration");
+        submit! {
+            PyClassInfo {
+                struct_id: || TypeId::of::<Configuration>(),
+                pyclass_name: "Configuration",
+                module: Some("validation"),
+                doc: "Configuration for validation behavior.",
+                getters: &[],
+                setters: &[],
+                bases: &[],
+                has_eq: false,
+                has_ord: false,
+                has_hash: false,
+                has_str: false,
+                subclass: true,
+            }
+        }
+        submit! {
+            PyMethodsInfo {
+                struct_id: || TypeId::of::<Configuration>(),
+                attrs: &[
+                    MemberInfo {
+                        name: "ignore_required_keys_on_root_dict",
+                        r#type: <bool as PyStubType>::type_output,
+                        doc: "Ignore required keys on the root dictionary.",
+                        default: None,
+                        deprecated: None,
+                    },
+                    MemberInfo {
+                        name: "return_coercion_infos",
+                        r#type: <bool as PyStubType>::type_output,
+                        doc: "Return coercion information in the validation result.",
+                        default: None,
+                        deprecated: None,
+                    },
+                    MemberInfo {
+                        name: "restrict_null_values",
+                        r#type: <bool as PyStubType>::type_output,
+                        doc: "Emit type errors for Null values instead of ignoring them.",
+                        default: None,
+                        deprecated: None,
+                    },
+                    MemberInfo {
+                        name: "warn_eos_config_keys",
+                        r#type: <bool as PyStubType>::type_output,
+                        doc: "When validating avd_design, emit warnings for top-level keys that exist in eos_config but not in avd_design.",
+                        default: None,
+                        deprecated: None,
+                    },
+                ],
+                getters: &[],
+                setters: &[],
+                methods: &[MethodInfo {
+                    name: "__init__",
+                    parameters: &[
+                        ParameterInfo {
+                            name: "ignore_required_keys_on_root_dict",
+                            kind: ParameterKind::KeywordOnly,
+                            type_info: <bool as PyStubType>::type_input,
+                            default: ParameterDefault::Expr {
+                                value: default_false,
+                                source_module: None,
+                            },
+                        },
+                        ParameterInfo {
+                            name: "return_coercion_infos",
+                            kind: ParameterKind::KeywordOnly,
+                            type_info: <bool as PyStubType>::type_input,
+                            default: ParameterDefault::Expr {
+                                value: default_false,
+                                source_module: None,
+                            },
+                        },
+                        ParameterInfo {
+                            name: "restrict_null_values",
+                            kind: ParameterKind::KeywordOnly,
+                            type_info: <bool as PyStubType>::type_input,
+                            default: ParameterDefault::Expr {
+                                value: default_false,
+                                source_module: None,
+                            },
+                        },
+                        ParameterInfo {
+                            name: "warn_eos_config_keys",
+                            kind: ParameterKind::KeywordOnly,
+                            type_info: <bool as PyStubType>::type_input,
+                            default: ParameterDefault::Expr {
+                                value: default_false,
+                                source_module: None,
+                            },
+                        },
+                    ],
+                    r#return: none_type,
+                    doc: "",
+                    r#type: MethodType::Instance,
+                    is_async: false,
+                    deprecated: None,
+                    type_ignored: None,
+                    is_overload: false,
+                }],
+                file: file!(),
+                line: line!(),
+                column: column!(),
+            }
+        }
+
+        submit_class!(
+            ValidationResult,
+            "ValidationResult",
+            "Result of data validation.",
+            [
+                MemberInfo {
+                    name: "violations",
+                    r#type: <Vec<Violation> as PyStubType>::type_output,
+                    doc: "",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "deprecations",
+                    r#type: <Vec<Deprecation> as PyStubType>::type_output,
+                    doc: "",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "ignored_eos_config_keys",
+                    r#type: <Vec<IgnoredEosConfigKey> as PyStubType>::type_output,
+                    doc: "",
+                    default: None,
+                    deprecated: None,
+                },
+            ]
+        );
+
+        submit_class!(
+            ValidatedDataResult,
+            "ValidatedDataResult",
+            "Result of data validation including the validated data as JSON.",
+            [
+                MemberInfo {
+                    name: "validation_result",
+                    r#type: <ValidationResult as PyStubType>::type_output,
+                    doc: "",
+                    default: None,
+                    deprecated: None,
+                },
+                MemberInfo {
+                    name: "validated_data",
+                    r#type: <Option<String> as PyStubType>::type_output,
+                    doc: "",
+                    default: None,
+                    deprecated: None,
+                },
+            ]
+        );
     }
 
     #[pymodule_init]
@@ -180,7 +533,18 @@ pub mod validation {
         Ok(())
     }
 
+    #[cfg_attr(
+        pyavd_stubgen,
+        pyo3_stub_gen_derive::gen_stub_pyfunction(module = "validation")
+    )]
     #[pyfunction]
+    /// Initialize the Schema store from a file containing the full schema store.
+    ///
+    /// Usually this is the schema.json.gz file built with pyavd.
+    /// This must be called before running any validations, since the store is a write-once static.
+    ///
+    /// Raises:
+    ///     RuntimeError: If the schema store cannot be loaded, resolved, or is already initialized.
     pub fn init_store_from_file(file: PathBuf) -> PyResult<()> {
         info!("Initialize the schema store from file.");
 
@@ -208,8 +572,32 @@ pub mod validation {
             }).inspect(|_| info!("Initialized the schema store from file."))
     }
 
+    #[cfg_attr(
+        pyavd_stubgen,
+        pyo3_stub_gen_derive::gen_stub_pyfunction(
+            module = "validation",
+            no_default_overload = true,
+            python_overload = r#"
+import typing
+
+@typing.overload
+def validate_json(
+    data_as_json: str,
+    schema_name: typing.Literal["eos_config", "avd_design", "cv_deploy"],
+    configuration: Configuration | None = None,
+) -> ValidationResult:
+    """
+    Validate data against a schema specified by name.
+
+    Raises:
+        RuntimeError: If the schema store is not initialized, schema_name is invalid, input data is invalid JSON, or validation reports an internal error.
+    """
+"#
+        )
+    )]
     #[pyfunction]
     #[pyo3(signature = (data_as_json, schema_name, configuration=None))]
+    /// Validate data against a schema specified by name.
     pub fn validate_json(
         data_as_json: &str,
         schema_name: &str,
@@ -227,8 +615,36 @@ pub mod validation {
         ValidationResult::from_validation_result(output.document.result)
     }
 
+    #[cfg_attr(
+        pyavd_stubgen,
+        pyo3_stub_gen_derive::gen_stub_pyfunction(
+            module = "validation",
+            no_default_overload = true,
+            python_overload = r#"
+import typing
+
+@typing.overload
+def get_validated_data(
+    data_as_json: str,
+    schema_name: typing.Literal["eos_config", "avd_design", "cv_deploy"],
+    configuration: Configuration | None = None,
+) -> ValidatedDataResult:
+    """
+    Validate data against a schema specified by name and return the data after coercion and validation.
+
+    This returned data is the type-coerced data encoded as JSON, which also contains default values that got inserted during validation.
+
+    Raises:
+        RuntimeError: If the schema store is not initialized, schema_name is invalid, input data is invalid JSON, coerced data cannot be serialized as JSON, or validation reports an internal error.
+    """
+"#
+        )
+    )]
     #[pyfunction]
     #[pyo3(signature = (data_as_json, schema_name, configuration=None))]
+    /// Validate data against a schema specified by name and return the data after coercion and validation.
+    ///
+    /// This returned data is the type-coerced data encoded as JSON, which also contains default values that got inserted during validation.
     pub fn get_validated_data(
         py: pyo3::Python<'_>,
         data_as_json: &str,
@@ -274,8 +690,16 @@ pub mod validation {
         result
     }
 
+    #[cfg_attr(
+        pyavd_stubgen,
+        pyo3_stub_gen_derive::gen_stub_pyfunction(module = "validation")
+    )]
     #[pyfunction]
     #[pyo3(signature = (data_as_json, schema_as_json, configuration=None))]
+    /// Validate data against the given schema.
+    ///
+    /// Raises:
+    ///     RuntimeError: If the schema store is not initialized, data_as_json or schema_as_json is invalid JSON, or validation reports an internal error.
     pub fn validate_json_with_adhoc_schema(
         data_as_json: &str,
         schema_as_json: &str,
@@ -298,6 +722,17 @@ pub mod validation {
         let validation_result: validation::ValidationResult = ctx.result;
         ValidationResult::from_validation_result(validation_result)
     }
+}
+
+/// Gather stub generation metadata for the Python package layout.
+#[cfg(pyavd_stubgen)]
+pub fn stub_info() -> pyo3_stub_gen::Result<pyo3_stub_gen::StubInfo> {
+    pyo3_stub_gen::StubInfo::from_project_root(
+        "validation".to_string(),
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../pyavd_utils"),
+        false,
+        pyo3_stub_gen::StubGenConfig::default(),
+    )
 }
 
 // Partial implementation of the pytests but here using pyo3 wrappers in Rust, to ensure we get coverage data

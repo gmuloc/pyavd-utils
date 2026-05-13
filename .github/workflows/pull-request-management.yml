@@ -88,6 +88,10 @@ jobs:
           python-version: "3.12"
       - name: Install YAML test suite fixture
         run: python scripts/fetch_yaml_test_suite.py
+      - name: Check generated Python stubs
+        run: make check-stubs
+        if: |
+          matrix.os == 'ubuntu-latest'
       - name: Check code formatting with cargo fmt
         run: cargo fmt --verbose
         if: |

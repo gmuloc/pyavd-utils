@@ -8,14 +8,25 @@ license.workspace = true
 pyo3-build-config = { workspace = true }
 
 [dependencies]
-pyo3 = { workspace = true, "features" = ["abi3-py310"] }
+pyo3 = { workspace = true }
 passwords = { path = "../passwords", default-features = false }
 
+[target.'cfg(pyavd_stubgen)'.dependencies]
+pyo3-stub-gen = { workspace = true }
+pyo3-stub-gen-derive = { workspace = true }
+
 [features]
-default = ["cbc", "sha512", "simple-7"]
+default = ["extension-module", "cbc", "sha512", "simple-7"]
+extension-module = ["pyo3/abi3-py310"]
 cbc = ["passwords/cbc"]
 sha512 = ["passwords/sha512"]
 simple-7 = ["passwords/simple-7"]
+stubgen = []
 
 [lib]
 crate-type = ["cdylib", "lib"]
+
+[[bin]]
+name = "generate_stub"
+path = "src/bin/generate_stub.rs"
+required-features = ["stubgen"]

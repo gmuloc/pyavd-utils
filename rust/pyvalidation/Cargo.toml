@@ -15,16 +15,30 @@ test_schema_store = { path = "../test_schema_store" }
 avdschema = { path = "../avdschema", features = ["dump_load_files"] }
 validation = { path = "../validation" }
 log = { workspace = true }
-pyo3 = { workspace = true, "features" = ["abi3-py310"] }
+pyo3 = { workspace = true }
 pyo3-log = { workspace = true }
 serde_json = { workspace = true, features = [
     "arbitrary_precision", # To support very big numbers
     "preserve_order",
 ] }
 
+[target.'cfg(pyavd_stubgen)'.dependencies]
+pyo3-stub-gen = { workspace = true }
+pyo3-stub-gen-derive = { workspace = true }
+
 [lib]
 crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/abi3-py310"]
+stubgen = []
 
 [[bench]]
 name = "performance"
 harness = false
+
+[[bin]]
+name = "generate_stub"
+path = "src/bin/generate_stub.rs"
+required-features = ["stubgen"]

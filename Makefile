@@ -71,6 +71,15 @@ install-rust: ## Provides the standard command to install the Rust toolchain usi
 rust-yaml-test-suite: ## Download the pinned YAML test suite used by rust/yaml-parser tests
 	python scripts/fetch_yaml_test_suite.py
 
+.PHONY: generate-stubs
+generate-stubs: check-cargo ## Regenerate Python .pyi files from PyO3 exports
+	RUSTFLAGS="--cfg pyavd_stubgen" cargo run -p pypasswords --bin generate_stub --no-default-features --features stubgen,cbc,sha512,simple-7
+	RUSTFLAGS="--cfg pyavd_stubgen" cargo run -p pyvalidation --bin generate_stub --no-default-features --features stubgen
+
+.PHONY: check-stubs
+check-stubs: generate-stubs ## Check generated Python .pyi files are up to date
+	git diff --exit-code -- pyavd_utils/passwords.pyi pyavd_utils/validation.pyi
+
 ################
 # Bump version #
 ################

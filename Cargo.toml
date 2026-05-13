@@ -13,6 +13,8 @@ ordermap = { version = "0.5.4" }
 pyo3 = { version = "0.26.0" }
 pyo3-build-config = { version = "0.26.0" }
 pyo3-log = { version = "0.13.1" }
+pyo3-stub-gen = { version = "0.22.2" }
+pyo3-stub-gen-derive = { version = "0.22.2" }
 fancy-regex = { version = "0.17" }
 serde = { version = "1.0.217" }
 serde_json = { version = "1.0.135" }
@@ -31,6 +33,7 @@ missing_docs = "warn"
 missing_debug_implementations = "warn"
 unreachable_pub = "warn"
 unused_qualifications = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(pyavd_stubgen)'] }
 deprecated = "warn"
 semicolon_in_expressions_from_macros = "deny"
 rust_2024_compatibility = { level = "warn", priority = -1 }

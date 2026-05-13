@@ -7,6 +7,7 @@ use std::env;
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS");
+    println!("cargo::rustc-check-cfg=cfg(pyavd_stubgen)");
 
     if let Ok(current_target_os) = env::var("CARGO_CFG_TARGET_OS")
         && current_target_os == "macos"
