@@ -4,9 +4,8 @@
 
 //! Token wrappers and cheap token-kind inspection helpers for the lexer.
 
-use crate::span::Span;
-
 use super::token::Token;
+use crate::span::Span;
 
 /// Token discriminant for cheap pattern matching without cloning.
 ///
@@ -28,8 +27,8 @@ pub(crate) enum TokenKind {
     StringStart,
     StringEnd,
     StringContent,
-    LiteralBlockHeader,
-    FoldedBlockHeader,
+    LiteralBlockScalar,
+    FoldedBlockScalar,
     Anchor,
     Alias,
     Tag,
@@ -60,8 +59,8 @@ impl<'input> From<&Token<'input>> for TokenKind {
             Token::StringStart(_) => Self::StringStart,
             Token::StringEnd(_) => Self::StringEnd,
             Token::StringContent(_) => Self::StringContent,
-            Token::LiteralBlockHeader(_) => Self::LiteralBlockHeader,
-            Token::FoldedBlockHeader(_) => Self::FoldedBlockHeader,
+            Token::LiteralBlockScalar(_) => Self::LiteralBlockScalar,
+            Token::FoldedBlockScalar(_) => Self::FoldedBlockScalar,
             Token::Anchor(_) => Self::Anchor,
             Token::Alias(_) => Self::Alias,
             Token::Tag(_) => Self::Tag,

@@ -3,7 +3,9 @@
 // that can be found in the LICENSE file.
 #![deny(unused_crate_dependencies)]
 
-use pyo3::{create_exception, exceptions::PyException, pymodule};
+use pyo3::create_exception;
+use pyo3::exceptions::PyException;
+use pyo3::pymodule;
 
 create_exception!(
     passwords,
@@ -136,7 +138,8 @@ create_exception!(
 #[pyo3(name = "passwords")]
 mod passwords {
 
-    use pyo3::{PyResult, pyfunction};
+    use pyo3::PyResult;
+    use pyo3::pyfunction;
 
     #[pymodule_export]
     pub use super::CBCDecryptionFailedError;

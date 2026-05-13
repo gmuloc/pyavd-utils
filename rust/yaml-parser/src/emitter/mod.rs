@@ -22,7 +22,6 @@ mod cursor;
 mod diagnostics;
 mod document;
 mod flow;
-mod scalar_block;
 mod scalar_plain;
 mod scalar_quoted;
 mod states;
@@ -34,17 +33,30 @@ mod value;
 use std::borrow::Cow;
 use std::collections::HashSet;
 
-use crate::ast_event::AstEvent;
-use crate::error::{ErrorKind, ParseError};
-use crate::event::{Comment, Event, Property, ScalarStyle};
-use crate::lexer::{Token, TokenKind};
-use crate::span::{BytePosition, IndentLevel, Span, usize_to_indent};
-
 use cursor::TokenCursor;
-use states::{
-    BlockMapPhase, BlockSeqPhase, DocState, EmitterProperties, FlowMapPhase, FlowSeqPhase,
-    ParseState, ValueContext, ValueKind,
-};
+use states::BlockMapPhase;
+use states::BlockSeqPhase;
+use states::DocState;
+use states::EmitterProperties;
+use states::FlowMapPhase;
+use states::FlowSeqPhase;
+use states::ParseState;
+use states::ValueContext;
+use states::ValueKind;
+
+use crate::ast_event::AstEvent;
+use crate::error::ErrorKind;
+use crate::error::ParseError;
+use crate::event::Comment;
+use crate::event::Event;
+use crate::event::Property;
+use crate::event::ScalarStyle;
+use crate::lexer::Token;
+use crate::lexer::TokenKind;
+use crate::span::BytePosition;
+use crate::span::IndentLevel;
+use crate::span::Span;
+use crate::span::usize_to_indent;
 
 /// Result of deciding what to do with collected properties at a dedented
 /// indent: either emit an empty scalar now, or keep the properties attached to
@@ -59,17 +71,6 @@ enum MaybeEmptyScalarDecision<'input> {
     /// Emit an empty scalar event using the given properties, and stop
     /// parsing the current value.
     EmitEmptyScalar { event: Event<'input> },
-}
-
-/// Line classification used when folding block scalars.
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum LineType {
-    /// Regular content line
-    Normal,
-    /// No content on this line
-    Empty,
-    /// Line with extra indentation (preserve)
-    MoreIndent,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -549,17 +550,6 @@ impl<'input> Emitter<'input> {
                         end_span,
                         pending_newlines,
                         needs_trim,
-                    ));
-                }
-                ParseState::BlockScalar {
-                    properties,
-                    header,
-                    start_span,
-                    min_indent,
-                    is_literal,
-                } => {
-                    return Some(self.process_block_scalar_state(
-                        properties, header, start_span, min_indent, is_literal,
                     ));
                 }
                 ParseState::AdditionalPropertiesCollect {

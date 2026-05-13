@@ -34,14 +34,14 @@
 mod support;
 
 #[cfg(feature = "serde")]
-use saphyr::{LoadableYamlNode as _, Yaml};
-
-use support::parse_ok;
-use yaml_parser::{Integer, Value};
-
+use saphyr::LoadableYamlNode as _;
+#[cfg(feature = "serde")]
+use saphyr::Yaml;
 #[cfg(feature = "serde")]
 use serde::Deserialize;
-
+use support::parse_ok;
+use yaml_parser::Integer;
+use yaml_parser::Value;
 #[cfg(feature = "serde")]
 use yaml_parser::serde::DeError;
 
@@ -803,6 +803,337 @@ fn test_block_scalar_chomping() {
             "Keep chomping should preserve trailing newlines",
         );
     }
+}
+
+#[test]
+fn test_block_scalar_empty_lines_with_chomping() {
+    let cases = [
+        (
+            "strip with one empty line",
+            "key: |-\n\n  top\n\n  bottom\n\nnext: value\n",
+            "\ntop\n\nbottom",
+        ),
+        (
+            "clip with one empty line",
+            "key: |\n\n  top\n\n  bottom\n\nnext: value\n",
+            "\ntop\n\nbottom\n",
+        ),
+        (
+            "keep with one empty line",
+            "key: |+\n\n  top\n\n  bottom\n\nnext: value\n",
+            "\ntop\n\nbottom\n\n",
+        ),
+        (
+            "strip with two empty lines",
+            "key: |-\n\n\n  top\n\n\n  bottom\n\n\nnext: value\n",
+            "\n\ntop\n\n\nbottom",
+        ),
+        (
+            "clip with two empty lines",
+            "key: |\n\n\n  top\n\n\n  bottom\n\n\nnext: value\n",
+            "\n\ntop\n\n\nbottom\n",
+        ),
+        (
+            "keep with two empty lines",
+            "key: |+\n\n\n  top\n\n\n  bottom\n\n\nnext: value\n",
+            "\n\ntop\n\n\nbottom\n\n\n",
+        ),
+    ];
+
+    for (name, input, expected) in cases {
+        let docs = parse_ok(input);
+        let doc = docs.first().expect("expected exactly one document");
+
+        let pairs = match &doc.value {
+            Value::Mapping(pairs) => Some(pairs),
+            _ => None,
+        }
+        .expect("expected mapping");
+
+        assert_eq!(pairs.len(), 2, "{name}");
+        let string_value = match &pairs[0].value.value {
+            Value::String(string_value) => Some(string_value.as_ref()),
+            _ => None,
+        }
+        .expect("expected string value");
+
+        assert_eq!(string_value, expected, "{name}");
+        assert!(matches!(&pairs[1].key.value, Value::String(value) if value == "next"));
+        assert!(matches!(&pairs[1].value.value, Value::String(value) if value == "value"));
+    }
+}
+
+#[test]
+fn test_folded_block_scalar_quotes_are_content() {
+    let docs = parse_ok("mykey: >-\n  'something' in 'quotes'.\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    let value_node = &pairs.first().expect("expected mapping pair").value;
+    let string_value = match &value_node.value {
+        Value::String(string_value) => Some(string_value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string value");
+
+    assert_eq!(string_value, "'something' in 'quotes'.");
+}
+
+#[test]
+fn test_block_scalar_indicator_tokens_are_content() {
+    let input = concat!(
+        "mykey: |-\n",
+        "  'single quote without close\n",
+        "  \"double quote without close\n",
+        "  !tag &anchor *alias [flow] {map}\n",
+        "  - item ? key : value # comment\n",
+    );
+    let docs = parse_ok(input);
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    let value_node = &pairs.first().expect("expected mapping pair").value;
+    let string_value = match &value_node.value {
+        Value::String(string_value) => Some(string_value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string value");
+
+    assert_eq!(
+        string_value,
+        concat!(
+            "'single quote without close\n",
+            "\"double quote without close\n",
+            "!tag &anchor *alias [flow] {map}\n",
+            "- item ? key : value # comment",
+        ),
+    );
+}
+
+#[test]
+fn test_block_scalar_header_comment_attaches_to_mapping_value() {
+    let docs = parse_ok("mykey: | # header\n  value\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    assert_eq!(
+        pairs[0]
+            .value
+            .trailing_comment()
+            .map(|comment| comment.text.as_ref()),
+        Some(" header"),
+    );
+}
+
+#[test]
+fn test_block_scalar_header_comment_keeps_following_sibling() {
+    let docs = parse_ok("key: | # header\n  value\nnext: sibling\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    assert_eq!(pairs.len(), 2);
+    assert_eq!(
+        pairs[0]
+            .value
+            .trailing_comment()
+            .map(|comment| comment.text.as_ref()),
+        Some(" header"),
+    );
+    assert!(matches!(&pairs[0].key.value, Value::String(value) if value == "key"));
+    assert!(matches!(&pairs[0].value.value, Value::String(value) if value == "value\n"));
+    assert!(matches!(&pairs[1].key.value, Value::String(value) if value == "next"));
+    assert!(matches!(&pairs[1].value.value, Value::String(value) if value == "sibling"));
+}
+
+#[test]
+fn test_block_scalar_header_comment_attaches_to_sequence_item() {
+    let docs = parse_ok("- > # header\n  value\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let items = match &doc.value {
+        Value::Sequence(items) => Some(items),
+        _ => None,
+    }
+    .expect("expected sequence");
+
+    assert_eq!(
+        items[0]
+            .as_node()
+            .trailing_comment()
+            .map(|comment| comment.text.as_ref()),
+        Some(" header"),
+    );
+}
+
+#[test]
+fn test_unicode_block_scalar_content_and_header_comment() {
+    let docs = parse_ok("mý🔑: >- # héader ☃\n  café 'quote'\n  emoji 😀\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    let key = match &pairs[0].key().value {
+        Value::String(value) => Some(value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string key");
+    assert_eq!(key, "mý🔑");
+
+    let value = match &pairs[0].value.value {
+        Value::String(value) => Some(value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string value");
+    assert_eq!(value, "café 'quote' emoji 😀");
+
+    assert_eq!(
+        pairs[0]
+            .value
+            .trailing_comment()
+            .map(|comment| comment.text.as_ref()),
+        Some(" héader ☃"),
+    );
+}
+
+#[test]
+fn test_unicode_block_scalar_explicit_indent_after_unicode_key() {
+    let docs = parse_ok("øø: |1\n value λ\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    let value = match &pairs[0].value.value {
+        Value::String(value) => Some(value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string value");
+
+    assert_eq!(value, "value λ\n");
+}
+
+#[test]
+fn test_tab_after_block_scalar_indent_is_content() {
+    let docs = parse_ok("key: |\t  \n  \tfoo\nnext: value\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    assert_eq!(pairs.len(), 2);
+    assert!(matches!(&pairs[0].key.value, Value::String(value) if value == "key"));
+    assert!(matches!(&pairs[0].value.value, Value::String(value) if value == "\tfoo\n"));
+    assert!(matches!(&pairs[1].key.value, Value::String(value) if value == "next"));
+    assert!(matches!(&pairs[1].value.value, Value::String(value) if value == "value"));
+}
+
+#[test]
+fn test_indented_document_marker_looking_block_scalar_content() {
+    let docs = parse_ok("key: |-\n  ...\nnext: value\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    assert_eq!(pairs.len(), 2);
+    assert!(matches!(&pairs[0].key.value, Value::String(value) if value == "key"));
+    assert!(matches!(&pairs[0].value.value, Value::String(value) if value == "..."));
+    assert!(matches!(&pairs[1].key.value, Value::String(value) if value == "next"));
+    assert!(matches!(&pairs[1].value.value, Value::String(value) if value == "value"));
+}
+
+#[test]
+fn test_explicit_block_scalar_indent_in_nested_mapping() {
+    let docs = parse_ok("outer:\n  key: |1\n   value\n  next: sibling\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let outer_pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected outer mapping");
+
+    assert_eq!(outer_pairs.len(), 1);
+    assert!(matches!(&outer_pairs[0].key.value, Value::String(value) if value == "outer"));
+
+    let inner_pairs = match &outer_pairs[0].value.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected nested mapping");
+
+    assert_eq!(inner_pairs.len(), 2);
+    assert!(matches!(&inner_pairs[0].key.value, Value::String(value) if value == "key"));
+    assert!(matches!(&inner_pairs[0].value.value, Value::String(value) if value == "value\n"));
+    assert!(matches!(&inner_pairs[1].key.value, Value::String(value) if value == "next"));
+    assert!(matches!(&inner_pairs[1].value.value, Value::String(value) if value == "sibling"));
+}
+
+#[test]
+fn test_zero_indented_unicode_block_scalar_document_marker_terminates() {
+    let docs = parse_ok("--- |-\nΔelta\n# not a comment\nemoji 😀\n...\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let value = match &doc.value {
+        Value::String(value) => Some(value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string document");
+
+    assert_eq!(value, "Δelta\n# not a comment\nemoji 😀");
+}
+
+#[test]
+fn test_unicode_block_scalar_crlf_normalizes_line_breaks() {
+    let docs = parse_ok("key: |+\r\n  å\r\n  ß\r\n");
+    let doc = docs.first().expect("expected exactly one document");
+
+    let pairs = match &doc.value {
+        Value::Mapping(pairs) => Some(pairs),
+        _ => None,
+    }
+    .expect("expected mapping");
+
+    let value = match &pairs[0].value.value {
+        Value::String(value) => Some(value.as_ref()),
+        _ => None,
+    }
+    .expect("expected string value");
+
+    assert_eq!(value, "å\nß\n");
 }
 
 #[test]

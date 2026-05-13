@@ -9,29 +9,31 @@ mod schema;
 mod store;
 mod utils;
 
+pub use self::inherit::Inherit;
+pub use self::resolve::SchemaWalkError;
+pub use self::resolve::SchemaWalkInternalError;
+pub use self::resolve::errors::RefSyntax;
+pub use self::resolve::errors::SchemaPath;
+pub use self::resolve::errors::SchemaResolverError;
+pub use self::resolve::errors::SchemaType;
+pub use self::resolve::resolve_ref::resolve_ref;
+pub use self::resolve::resolve_schema;
+pub use self::schema::any;
+pub use self::schema::base;
+pub use self::schema::boolean;
+pub use self::schema::dict;
+pub use self::schema::int;
+pub use self::schema::list;
+pub use self::schema::str;
+pub use self::store::SchemaStoreError;
+pub use self::store::Store;
+pub use self::utils::dump::Dump;
+pub use self::utils::load::Load;
+pub use self::utils::load::LoadError;
 #[cfg(feature = "dump_load_files")]
 pub use self::utils::load::LoadFromFragments;
-pub use self::{
-    inherit::Inherit,
-    resolve::errors::{RefSyntax, SchemaPath, SchemaResolverError, SchemaType},
-    resolve::resolve_ref::resolve_ref,
-    resolve::resolve_schema,
-    resolve::{SchemaWalkError, SchemaWalkInternalError},
-    schema::any,
-    schema::base,
-    schema::boolean,
-    schema::dict,
-    schema::int,
-    schema::list,
-    schema::str,
-    store::SchemaStoreError,
-    store::Store,
-    utils::dump::Dump,
-    utils::load::Load,
-    utils::load::LoadError,
-    utils::schema_data::SchemaDataMapping,
-    utils::schema_data::SchemaDataSequence,
-    utils::schema_data::SchemaDataValue,
-    utils::schema_from_path::SchemaKeys,
-    utils::schema_from_path::get_schema_from_path,
-};
+pub use self::utils::schema_data::SchemaDataMapping;
+pub use self::utils::schema_data::SchemaDataSequence;
+pub use self::utils::schema_data::SchemaDataValue;
+pub use self::utils::schema_from_path::SchemaKeys;
+pub use self::utils::schema_from_path::get_schema_from_path;

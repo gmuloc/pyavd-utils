@@ -11,7 +11,9 @@
 use std::sync::OnceLock;
 
 use avdschema::Store;
-use pyo3::{create_exception, exceptions::PyException, pymodule};
+use pyo3::create_exception;
+use pyo3::exceptions::PyException;
+use pyo3::pymodule;
 
 static STORE: OnceLock<Store> = OnceLock::new();
 
@@ -138,17 +140,27 @@ create_exception!(
 
 #[pymodule(gil_used = false)]
 pub mod validation {
-    use super::STORE;
-    use avdschema::{Load as _, Store, any::AnySchema};
-    use log::{debug, info};
-    use pyo3::{Bound, PyResult, pyclass, pyfunction, pymethods, types::PyModule};
     use std::path::PathBuf;
-    use validation::{
-        Context, StoreValidateInput as _, Validation as _, feedback::InputDiagnostic,
-    };
+
+    use avdschema::Load as _;
+    use avdschema::Store;
+    use avdschema::any::AnySchema;
+    use log::debug;
+    use log::info;
+    use pyo3::Bound;
+    use pyo3::PyResult;
+    use pyo3::pyclass;
+    use pyo3::pyfunction;
+    use pyo3::pymethods;
+    use pyo3::types::PyModule;
+    use validation::Context;
+    use validation::StoreValidateInput as _;
+    use validation::Validation as _;
+    use validation::feedback::InputDiagnostic;
 
     #[pymodule_export]
     pub use super::PyAVDUtilsValidationError;
+    use super::STORE;
     #[pymodule_export]
     pub use super::ValidationInternalError;
     #[pymodule_export]
@@ -515,12 +527,12 @@ pub mod validation {
 mod tests {
     use std::sync::OnceLock;
 
-    use super::{STORE, validation};
     use pyo3::types::PyAnyMethods as _;
 
-    use crate::validation::{
-        ToPythonError as _, ValidationResult, first_input_diagnostic_as_pyerr,
-    };
+    use super::STORE;
+    use super::validation;
+    use crate::validation::ValidationResult;
+    use crate::validation::first_input_diagnostic_as_pyerr;
 
     // Initializing python only once. Otherwise things may crash when running in multiple threads.
     // Also downloading the test schema and extracting to fragments.
