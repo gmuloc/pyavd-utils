@@ -4,6 +4,7 @@
 // TODO: Reevaluate the allow
 #![allow(
     missing_docs,
+    missing_debug_implementations,
     clippy::empty_structs_with_brackets,
     clippy::field_scoped_visibility_modifiers,
     clippy::indexing_slicing,

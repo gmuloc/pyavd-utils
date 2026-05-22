@@ -4,6 +4,7 @@
 // TODO: Reevaluate the allow
 #![allow(
     missing_docs,
+    missing_debug_implementations,
     clippy::indexing_slicing,
     clippy::map_err_ignore,
     clippy::module_name_repetitions,
