@@ -95,9 +95,8 @@ repos:
     hooks:
       - id: cargo-about-generate
         name: Generate third-party Rust licenses
-        entry: cargo-about generate --locked --fail -o pyavd_utils/THIRD_PARTY_LICENSES.txt about-text.hbs
-        language: rust
-        additional_dependencies: ["cli:cargo-about:0.8.4"]
+        entry: scripts/cargo_about_generate.sh
+        language: system
         files: (^|/)Cargo\.(toml|lock)$|^about\.toml$|^about-text\.hbs$
         pass_filenames: false
 
