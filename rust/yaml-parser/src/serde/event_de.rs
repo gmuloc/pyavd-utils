@@ -156,7 +156,7 @@ impl<'de> EventStream<'de> {
         let event = self.emitter.next()?;
 
         // Check if this is an Alias - if so, start replaying
-        if let Event::Alias { ref name, .. } = event {
+        if let Event::Alias { name, .. } = &event {
             let name_str = name.to_string();
             if let Some(recorded) = self.anchors.get(&name_str) {
                 debug_assert!(
