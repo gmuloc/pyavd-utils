@@ -119,6 +119,7 @@ fn is_same_schema(a: &AnySchema, b: &AnySchema) -> bool {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::Resolve;
     use crate::dict::Dict;

@@ -517,6 +517,7 @@ where
         .map_err(|err| SerError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, err)))
 }
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     #![allow(
         clippy::expect_used,

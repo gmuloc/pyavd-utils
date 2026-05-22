@@ -64,6 +64,7 @@ impl<'x> TryFrom<&'x AnySchema> for &'x List {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::List;
     use crate::any::AnySchema;

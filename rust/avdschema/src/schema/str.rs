@@ -118,6 +118,7 @@ impl From<&str> for Pattern {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::Str;
     use crate::any::AnySchema;

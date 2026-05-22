@@ -221,6 +221,7 @@ fn value_to_string<V: ValidatableValue>(value: &V) -> String {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use avdschema::any::AnySchema;
     use avdschema::dict::Dict;

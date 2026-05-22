@@ -10,6 +10,9 @@ cbc = ["dep:cbc", "dep:cipher", "dep:des", "dep:base64"]
 sha512 = ["dep:sha-crypt"]
 simple-7 = ["dep:getrandom", "dep:hex"]
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage_nightly)"] }
+
 [dependencies]
 derive_more = { workspace = true, features = ["display", "from"]}
 # sha512 feature

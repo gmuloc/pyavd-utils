@@ -82,6 +82,7 @@ fn validate_max<V: ValidatableValue>(schema: &Int, value: &V, input: &i64, ctx: 
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use serde_json::Value;
 

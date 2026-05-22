@@ -1040,6 +1040,7 @@ where
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[allow(
     clippy::expect_used,
     reason = "Approved for test assertions in this module"

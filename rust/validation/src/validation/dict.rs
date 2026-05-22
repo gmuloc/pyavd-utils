@@ -272,6 +272,7 @@ fn check_deprecation<'a, M: ValidatableMapping<'a>>(
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use avdschema::base::Base;
     use avdschema::int::Int;

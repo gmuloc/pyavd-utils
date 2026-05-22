@@ -135,6 +135,7 @@ pub fn get_schema_from_path<'store, 'value>(
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use ordermap::OrderMap;
     use serde_json::json;

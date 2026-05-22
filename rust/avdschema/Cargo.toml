@@ -26,3 +26,6 @@ xz2 = { version = "0.1.7", optional = true }
 [features]
 dump_load_files = ["dep:walkdir"]
 xz2 = ["dump_load_files", "dep:xz2"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage_nightly)"] }

@@ -33,6 +33,7 @@ unreachable_pub = "warn"
 unused_qualifications = "warn"
 deprecated = "warn"
 semicolon_in_expressions_from_macros = "deny"
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(coverage_nightly)"] }
 rust_2024_compatibility = { level = "warn", priority = -1 }
 
 [workspace.lints.clippy]

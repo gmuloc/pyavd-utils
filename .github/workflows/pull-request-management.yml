@@ -87,8 +87,8 @@ jobs:
           python-version: "3.12"
       - name: Install YAML test suite fixture
         run: python scripts/fetch_yaml_test_suite.py
-      - name: Install nightly rustfmt
-        run: rustup toolchain install nightly --profile minimal --component rustfmt
+      - name: Install nightly Rust tooling
+        run: rustup toolchain install nightly --profile minimal --component rustfmt --component llvm-tools-preview
         if: |
           matrix.os == 'ubuntu-latest'
       - name: Run cargo fmt pre-commit hook
@@ -126,7 +126,7 @@ jobs:
       - name: Generate coverage report with cargo llvm-cov
         run: |
           cargo install cargo-llvm-cov --locked
-          cargo llvm-cov --locked --all-targets --all-features --lcov --output-path lcov.info
+          cargo +nightly llvm-cov --locked --all-targets --all-features --lcov --output-path lcov.info
         if: |
           matrix.os == 'ubuntu-latest'
       - name: Upload coverage report

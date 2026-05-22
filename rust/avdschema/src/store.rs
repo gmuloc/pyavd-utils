@@ -78,6 +78,7 @@ pub enum SchemaStoreError {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
 
     #[cfg(feature = "dump_load_files")]

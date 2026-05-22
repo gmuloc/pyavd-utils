@@ -37,6 +37,7 @@ pub fn resolve_ref<'a>(ref_: &str, store: &'a Store) -> Result<&'a AnySchema, Sc
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::resolve_ref;
     use crate::resolve::errors::SchemaResolverError;

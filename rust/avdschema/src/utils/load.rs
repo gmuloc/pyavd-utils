@@ -128,6 +128,7 @@ pub enum LoadError {
 }
 
 #[cfg(all(test, feature = "dump_load_files"))]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::Load;
     use crate::Store;

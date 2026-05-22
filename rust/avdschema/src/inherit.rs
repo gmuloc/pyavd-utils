@@ -202,6 +202,7 @@ impl Inherit for AnySchema {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::Inherit;
     use crate::any::AnySchema;

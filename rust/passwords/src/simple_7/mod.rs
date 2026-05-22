@@ -77,6 +77,7 @@ pub fn simple_7_encrypt(data: &str, salt: Option<u8>) -> Result<String, Simple7E
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 

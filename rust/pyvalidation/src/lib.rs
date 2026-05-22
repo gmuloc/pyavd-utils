@@ -2,6 +2,9 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 
+#![cfg_attr(coverage_nightly, feature(coverage_attribute))]
+#![cfg_attr(coverage_nightly, allow(unused_features))]
+
 // When running from Python we wish to cache Store inside Rust,
 // to avoid sending the huge object back and forth.
 // The store must be initialized before running validation by calling
@@ -312,6 +315,7 @@ pub mod validation {
 // Partial implementation of the pytests but here using pyo3 wrappers in Rust, to ensure we get coverage data
 // and that we can catch issues in Rust without building the Python first.
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use std::sync::OnceLock;
 

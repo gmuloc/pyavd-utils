@@ -52,6 +52,7 @@ fn validate_salt_characters(s: &str) -> Result<(), InvalidSaltError> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 

@@ -82,6 +82,7 @@ pub enum DumpError {
 
 // These tests are also called from the load tests.
 #[cfg(all(test, feature = "dump_load_files"))]
+#[cfg_attr(coverage_nightly, coverage(off))]
 pub(crate) mod tests {
     use super::Dump;
     use crate::utils::test_utils::get_test_dict_schema;

@@ -48,6 +48,7 @@ impl<'x> TryFrom<&'x AnySchema> for &'x Bool {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::Bool;
     use crate::any::AnySchema;

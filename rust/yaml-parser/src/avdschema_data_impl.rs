@@ -86,6 +86,7 @@ impl<'a, 'input: 'a> SchemaDataSequence<'a> for YamlSequence<'a, 'input> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use std::borrow::Cow;
 

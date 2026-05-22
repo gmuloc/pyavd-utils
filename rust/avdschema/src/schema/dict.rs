@@ -205,6 +205,7 @@ pub struct DynamicKeyInfo<'a> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use ordermap::OrderMap;
     use serde_json::Value;

@@ -149,6 +149,7 @@ fn validate_pattern<V: ValidatableValue>(schema: &Str, value: &V, input: &str, c
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use avdschema::base::valid_values::ValidValues;
     use serde_json::Value;

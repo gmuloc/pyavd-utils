@@ -120,6 +120,7 @@ pub fn cbc_check_password(key: &[u8], ciphertext: &[u8]) -> bool {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 

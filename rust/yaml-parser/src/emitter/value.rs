@@ -1283,6 +1283,7 @@ impl<'input> Emitter<'input> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use std::borrow::Cow;
 

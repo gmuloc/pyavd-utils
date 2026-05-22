@@ -632,6 +632,7 @@ fn split_decimal(value: u32) -> Option<(u8, u32)> {
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use std::borrow::Cow;
 

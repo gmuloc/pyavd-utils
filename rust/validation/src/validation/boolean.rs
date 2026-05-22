@@ -45,6 +45,7 @@ fn validate_ref<V: ValidatableValue>(
 }
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use serde_json::Value;
 

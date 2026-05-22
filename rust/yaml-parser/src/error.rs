@@ -311,6 +311,7 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError {}
 
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 
