@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 #![allow(
+    missing_docs,
     clippy::empty_structs_with_brackets,
     clippy::empty_enum_variants_with_brackets,
     clippy::impl_trait_in_params,

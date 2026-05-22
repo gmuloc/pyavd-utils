@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 #![allow(
+    missing_docs,
     clippy::empty_structs_with_brackets,
     clippy::field_scoped_visibility_modifiers,
     clippy::indexing_slicing,

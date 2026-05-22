@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 #![allow(
+    missing_docs,
     clippy::indexing_slicing,
     clippy::map_err_ignore,
     clippy::module_name_repetitions,

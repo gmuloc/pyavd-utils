@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 #![allow(
+    missing_docs,
     clippy::min_ident_chars,
     reason = "Criterion benchmark closures conventionally use short c and b parameters"
 )]
