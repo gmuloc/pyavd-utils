@@ -4,7 +4,6 @@
 // TODO: Reevaluate the allow
 #![allow(
     missing_docs,
-    clippy::default_trait_access,
     clippy::empty_structs_with_brackets,
     clippy::empty_enum_variants_with_brackets,
     clippy::iter_over_hash_type,
@@ -16,7 +15,6 @@
     clippy::partial_pub_fields,
     clippy::pub_underscore_fields,
     clippy::redundant_type_annotations,
-    clippy::ref_patterns,
     clippy::shadow_unrelated,
     clippy::used_underscore_binding,
     clippy::unwrap_used,

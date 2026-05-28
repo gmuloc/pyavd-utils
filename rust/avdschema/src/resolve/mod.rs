@@ -68,7 +68,7 @@ impl Resolve for AnySchema {
         }
 
         // Next resolve the main schema itself
-        while let Some(ref ref_) = self.ref_() {
+        while let Some(ref_) = &self.ref_() {
             // The clone here is required since we might be inheriting parts of this schema in other places, and thereby modify the schemas.
             let mut ref_schema = resolve_ref(ref_, store)?.clone();
             ref_schema.resolve(store)?;
