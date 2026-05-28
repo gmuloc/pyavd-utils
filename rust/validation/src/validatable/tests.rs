@@ -9,10 +9,15 @@ use super::ValidatableValue;
 use super::integral_float_to_i64;
 
 #[test]
+#[allow(
+    clippy::unreadable_literal,
+    clippy::lossy_float_literal,
+    reason = "the literal intentionally documents the imprecise i64 upper boundary"
+)]
 fn test_integral_float_to_i64_rejects_imprecise_upper_bound() {
     assert_eq!(integral_float_to_i64(42.0), Some(42));
     assert_eq!(integral_float_to_i64(i64::MIN as f64), Some(i64::MIN));
-    assert_eq!(integral_float_to_i64(9_223_372_036_854_776_000.0), None);
+    assert_eq!(integral_float_to_i64(9_223_372_036_854_775_808.0), None);
 }
 
 #[test]
