@@ -9,3 +9,5 @@ updates:
       day: "monday"
     commit-message:
       prefix: "Bump(rust): "
+    cooldown:
+      default-days: 7
