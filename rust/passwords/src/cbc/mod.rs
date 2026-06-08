@@ -43,13 +43,20 @@ impl std::error::Error for CbcError {}
 /// Convert the key to the proper format to give to CBC Encryptor and Decryptor.
 fn derive_key(pw: &[u8]) -> [u8; 24] {
     let mut result = SEED;
-    for (idx, &b) in pw.iter().enumerate() {
-        result[idx & 7] ^= b;
+    let mut key_index = 0;
+    for &password_byte in pw {
+        if let Some(result_byte) = result.get_mut(key_index) {
+            *result_byte ^= password_byte;
+        }
+        key_index = (key_index + 1) & 7;
     }
 
     let mut k8 = [0u8; 8];
-    for i in 0..8 {
-        k8[i] = PARITY_BITS[(result[i] & 0x7F) as usize];
+    for (result_byte, key_byte) in result.into_iter().zip(&mut k8) {
+        let parity_index = usize::from(result_byte & 0x7F);
+        if let Some(parity_byte) = PARITY_BITS.get(parity_index) {
+            *key_byte = *parity_byte;
+        }
     }
 
     let mut key_24 = [0u8; 24];
@@ -95,24 +102,27 @@ pub fn cbc_decrypt(key: &[u8], b64_encrypted_data: &[u8]) -> Result<Vec<u8>, Cbc
         .map_err(|_| CbcError::DecryptionFailed)?;
 
     // Validate ENC SIGN
-    if pt.len() < 4 || &pt[0..3] != ENC_SIG {
+    let Some(pt_without_signature) = pt.strip_prefix(ENC_SIG) else {
         return Err(CbcError::InvalidSignature);
-    }
+    };
 
     // Parse the Metadata byte (4th byte)
-    let meta_byte = pt[3];
+    let Some((&meta_byte, data_with_padding)) = pt_without_signature.split_first() else {
+        return Err(CbcError::InvalidSignature);
+    };
     if meta_byte < 0xE {
         return Err(CbcError::InvalidSignature);
     }
     let padding_len = ((meta_byte as usize) - 0xE) / 16;
+    let end_idx = data_with_padding
+        .len()
+        .checked_sub(padding_len)
+        .ok_or(CbcError::InvalidSignature)?;
 
-    // Layout: [SIG (3)] [META (1)] [DATA (len - 4 - padding)] [NULLS (padding)]
-    let end_idx = pt.len() - padding_len;
-    if end_idx < 4 {
-        return Err(CbcError::InvalidSignature);
-    }
-
-    Ok(pt[4..end_idx].to_vec())
+    data_with_padding
+        .get(..end_idx)
+        .map(<[u8]>::to_vec)
+        .ok_or(CbcError::InvalidSignature)
 }
 
 pub fn cbc_check_password(key: &[u8], ciphertext: &[u8]) -> bool {
