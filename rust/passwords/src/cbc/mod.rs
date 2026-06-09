@@ -110,7 +110,7 @@ pub fn cbc_decrypt(key: &[u8], b64_encrypted_data: &[u8]) -> Result<Vec<u8>, Cbc
     let Some((&meta_byte, data_with_padding)) = pt_without_signature.split_first() else {
         return Err(CbcError::InvalidSignature);
     };
-    if meta_byte < 0xE {
+    if !(0x0E..=0x7E).contains(&meta_byte) || (meta_byte & 0x0F) != 0x0E {
         return Err(CbcError::InvalidSignature);
     }
     let padding_len = ((meta_byte as usize) - 0xE) / 16;
@@ -170,6 +170,25 @@ mod tests {
         let result = cbc_decrypt(key, ciphertext);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cbc_decrypt_rejects_invalid_meta_byte() {
+        let key: &[u8] = b"42.42.42.42_passwd";
+        let hashed_key = derive_key(key);
+        let iv = [0u8; 8];
+        let mut buf = Vec::from([ENC_SIG.as_slice(), &[0x1F], TEST_PASSWORD].concat());
+        buf.resize(16, 0);
+
+        let cipher = cbc::Encryptor::<TdesEde3>::new(&hashed_key.into(), &iv.into());
+        let ct = cipher
+            .encrypt_padded::<NoPadding>(&mut buf, 16)
+            .expect("Encryption failed");
+        let encrypted = B64.encode(ct);
+
+        let result = cbc_decrypt(key, encrypted.as_bytes());
+
+        assert!(matches!(result, Err(CbcError::InvalidSignature)));
     }
 
     #[test]
