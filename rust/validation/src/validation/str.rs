@@ -117,11 +117,11 @@ fn validate_max_length<V: ValidatableValue>(
 fn validate_pattern<V: ValidatableValue>(schema: &Str, value: &V, input: &str, ctx: &mut Context) {
     if let Some(pattern) = &schema.pattern {
         match pattern.get_compiled_pattern() {
-            Err(error) => ctx.add_error_for(
+            Err(err) => ctx.add_error_for(
                 value,
                 ErrorIssue::InternalError {
                     message: format!(
-                        "Schema contains an invalid regex pattern '{pattern}': {error}"
+                        "Schema contains an invalid regex pattern '{pattern}': {err}"
                     ),
                 },
             ),
