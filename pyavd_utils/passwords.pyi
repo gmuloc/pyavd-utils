@@ -106,6 +106,7 @@ def simple_7_encrypt(data: str, salt: int | None) -> str:
     Raises:
         Simple7InvalidSaltValueError: If the salt is not in the range 0-15.
         Simple7EmptyPasswordError: If the password is empty.
+        Simple7RandomSourceUnavailableError: If random salt generation fails.
     """
 
 def simple_7_decrypt(data: str) -> str:
