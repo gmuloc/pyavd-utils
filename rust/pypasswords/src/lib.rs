@@ -169,7 +169,8 @@ mod passwords {
                 passwords::Sha512CryptError::InvalidSalt(
                     passwords::InvalidSaltError::InvalidCharacter(_),
                 ) => Sha512CryptInvalidSaltCharacterError::new_err(message),
-                passwords::Sha512CryptError::ShaCrypt(_) => {
+                passwords::Sha512CryptError::ShaCrypt(_)
+                | passwords::Sha512CryptError::Base64InvalidLength(_) => {
                     Sha512CryptLibraryError::new_err(message)
                 }
             }

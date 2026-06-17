@@ -77,7 +77,7 @@ fn sha512_crypt_invalid_character_in_salt_err() {
 #[test]
 fn sha512_crypt_library_error_maps_to_specific_pyerr() {
     with_passwords_module(|py, _module| {
-        let err = ::passwords::Sha512CryptError::ShaCrypt(sha_crypt::CryptError::RoundsError)
+        let err = ::passwords::Sha512CryptError::ShaCrypt(sha_crypt::Error::RoundsInvalid)
             .to_python_error();
 
         assert!(err.is_instance_of::<passwords::Sha512CryptLibraryError>(py));
