@@ -1374,6 +1374,7 @@ name = "pypasswords"
 version = "0.0.6"
 dependencies = [
  "base64ct",
+ "derive_more",
  "getrandom",
  "passwords",
  "pyo3",
@@ -1387,6 +1388,7 @@ version = "0.0.6"
 dependencies = [
  "avdschema",
  "criterion",
+ "derive_more",
  "log",
  "pyo3",
  "pyo3-build-config",

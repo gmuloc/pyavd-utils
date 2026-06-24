@@ -3,7 +3,8 @@
 // that can be found in the LICENSE file.
 
 use super::*;
-use crate::passwords::ToPythonError as _;
+use crate::errors::CbcDecryptPyError;
+use crate::errors::CbcEncryptPyError;
 
 #[test]
 fn cbc_decrypt_invalid_base64_err() {
@@ -100,14 +101,16 @@ fn cbc_verify_returns_bool() {
 #[test]
 fn cbc_internal_errors_map_to_specific_pyerrs() {
     with_passwords_module(|py, _module| {
-        let err = ::passwords::CbcError::InvalidUtf8.to_python_error();
+        let err = pyo3::PyErr::from(CbcDecryptPyError::from(::passwords::CbcError::InvalidUtf8));
         assert!(err.is_instance_of::<passwords::CBCInvalidUtf8Error>(py));
         assert_eq!(
             err.value(py).to_string(),
             "Decrypted data is not valid UTF-8."
         );
 
-        let encryption_err = ::passwords::CbcError::EncryptionFailed.to_python_error();
+        let encryption_err = pyo3::PyErr::from(CbcEncryptPyError::from(
+            ::passwords::CbcError::EncryptionFailed,
+        ));
         assert!(encryption_err.is_instance_of::<passwords::CBCEncryptionFailedError>(py));
         assert_eq!(
             encryption_err.value(py).to_string(),

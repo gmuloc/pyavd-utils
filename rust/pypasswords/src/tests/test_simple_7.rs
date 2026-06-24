@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 use super::*;
-use crate::passwords::ToPythonError as _;
+use crate::errors::Simple7EncryptPyError;
 
 #[test]
 fn simple_7_encrypt_decrypt_roundtrip() {
@@ -151,8 +151,9 @@ fn simple_7_decrypt_invalid_utf8_err() {
 #[test]
 fn simple_7_random_source_unavailable_maps_to_specific_pyerr() {
     with_passwords_module(|py, _module| {
-        let err = ::passwords::Simple7Error::RandomSourceUnavailable(getrandom::Error::UNSUPPORTED)
-            .to_python_error();
+        let err = pyo3::PyErr::from(Simple7EncryptPyError::from(
+            ::passwords::Simple7Error::RandomSourceUnavailable(getrandom::Error::UNSUPPORTED),
+        ));
 
         assert!(err.is_instance_of::<passwords::Simple7RandomSourceUnavailableError>(py));
         assert!(err.value(py).to_string().contains("random salt"));

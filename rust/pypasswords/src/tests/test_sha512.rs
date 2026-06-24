@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 use super::*;
-use crate::passwords::ToPythonError as _;
+use crate::errors::Sha512CryptPyError;
 #[test]
 fn sha512_crypt_valid_hash_with_salt_ok() {
     with_passwords_module(|py, module| {
@@ -77,8 +77,9 @@ fn sha512_crypt_invalid_character_in_salt_err() {
 #[test]
 fn sha512_crypt_library_error_maps_to_specific_pyerr() {
     with_passwords_module(|py, _module| {
-        let err = ::passwords::Sha512CryptError::ShaCrypt(sha_crypt::Error::RoundsInvalid)
-            .to_python_error();
+        let err = pyo3::PyErr::from(Sha512CryptPyError::from(
+            ::passwords::Sha512CryptError::ShaCrypt(sha_crypt::Error::RoundsInvalid),
+        ));
 
         assert!(err.is_instance_of::<passwords::Sha512CryptLibraryError>(py));
         assert!(err.is_instance_of::<passwords::PasswordError>(py));
@@ -93,8 +94,9 @@ fn sha512_crypt_library_error_maps_to_specific_pyerr() {
 #[test]
 fn sha512_crypt_base64_error_maps_to_specific_pyerr() {
     with_passwords_module(|py, _module| {
-        let err = ::passwords::Sha512CryptError::Base64InvalidLength(base64ct::InvalidLengthError)
-            .to_python_error();
+        let err = pyo3::PyErr::from(Sha512CryptPyError::from(
+            ::passwords::Sha512CryptError::Base64InvalidLength(base64ct::InvalidLengthError),
+        ));
 
         assert!(err.is_instance_of::<passwords::Sha512CryptBase64Error>(py));
         assert!(err.is_instance_of::<passwords::PasswordError>(py));
