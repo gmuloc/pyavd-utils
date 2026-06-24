@@ -27,42 +27,28 @@ mod passwords {
     use crate::errors::Simple7DecryptPyError;
     #[cfg(feature = "simple-7")]
     use crate::errors::Simple7EncryptPyError;
+    #[rustfmt::skip]
     #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCDecryptionFailedError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCEncryptionFailedError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCInvalidBase64Error;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCInvalidBase64Utf8Error;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCInvalidSignatureError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::CBCInvalidUtf8Error;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::PasswordError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Sha512CryptBase64Error;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Sha512CryptInvalidSaltCharacterError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Sha512CryptInvalidSaltEmptyError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Sha512CryptLibraryError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7DataTooShortError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7EmptyPasswordError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7InvalidHexEncodingError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7InvalidSaltFormatError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7InvalidSaltValueError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7InvalidUtf8Error;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::Simple7RandomSourceUnavailableError;
+    pub(crate) use crate::exceptions::{
+        CBCDecryptionFailedError,
+        CBCEncryptionFailedError,
+        CBCInvalidBase64Error,
+        CBCInvalidBase64Utf8Error,
+        CBCInvalidSignatureError,
+        CBCInvalidUtf8Error,
+        PasswordError,
+        Sha512CryptBase64Error,
+        Sha512CryptInvalidSaltCharacterError,
+        Sha512CryptInvalidSaltEmptyError,
+        Sha512CryptLibraryError,
+        Simple7DataTooShortError,
+        Simple7EmptyPasswordError,
+        Simple7InvalidHexEncodingError,
+        Simple7InvalidSaltFormatError,
+        Simple7InvalidSaltValueError,
+        Simple7InvalidUtf8Error,
+        Simple7RandomSourceUnavailableError,
+    };
 
     #[cfg(feature = "sha512")]
     #[pyfunction]

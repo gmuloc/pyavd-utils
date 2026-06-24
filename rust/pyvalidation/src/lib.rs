@@ -56,40 +56,27 @@ pub mod validation {
     use crate::errors::InitStoreFromFilePyError;
     use crate::errors::ValidateJsonPyError;
     use crate::errors::ValidateJsonWithAdhocSchemaPyError;
+    #[rustfmt::skip]
     #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationInternalError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationInvalidAdhocSchemaJsonError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationInvalidCoercedDataJsonError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationInvalidJsonDataError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationInvalidSchemaNameError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationRefSyntaxError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationSchemaPathError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationSchemaTypeError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationSchemaWalkError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreAlreadyInitializedError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreInvalidExtensionError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreLoadIoError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreLoadJsonError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreLoadYamlError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreNoFilesFoundError;
-    #[pymodule_export]
-    pub(crate) use crate::exceptions::ValidationStoreNotInitializedError;
+    pub(crate) use crate::exceptions::{
+        ValidationError,
+        ValidationInternalError,
+        ValidationInvalidAdhocSchemaJsonError,
+        ValidationInvalidCoercedDataJsonError,
+        ValidationInvalidJsonDataError,
+        ValidationInvalidSchemaNameError,
+        ValidationRefSyntaxError,
+        ValidationSchemaPathError,
+        ValidationSchemaTypeError,
+        ValidationSchemaWalkError,
+        ValidationStoreAlreadyInitializedError,
+        ValidationStoreInvalidExtensionError,
+        ValidationStoreLoadIoError,
+        ValidationStoreLoadJsonError,
+        ValidationStoreLoadYamlError,
+        ValidationStoreNoFilesFoundError,
+        ValidationStoreNotInitializedError,
+    };
 
     pub(crate) fn first_input_diagnostic_message(
         diagnostic: Option<&InputDiagnostic>,
