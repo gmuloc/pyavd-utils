@@ -20,14 +20,14 @@ def test_validation_error_hierarchy() -> None:
 
 
 def test_validation_error_module_and_pickle() -> None:
+def test_validation_error_module_and_pickle() -> None:
     """Test that validation errors have the public Python module path and can be pickled."""
     err = ValidationInvalidJsonDataError("boom")
 
     assert ValidationInvalidJsonDataError.__module__ == "pyavd_utils.validation"
-    # Trusted local round-trip: this verifies PyO3 exception pickling metadata.
-    assert type(pickle.loads(pickle.dumps(err))) is ValidationInvalidJsonDataError  # noqa: S301
-
-
+    unpickled = pickle.loads(pickle.dumps(err))
+    assert type(unpickled) is ValidationInvalidJsonDataError
+    assert str(unpickled) == "boom"
 @pytest.mark.usefixtures("init_store")
 def test_validate_json() -> None:
     expected_violations: list[tuple[list[str], str]] = [
