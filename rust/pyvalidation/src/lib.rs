@@ -226,6 +226,10 @@ pub mod validation {
     }
 
     fn init_store_from_file_impl(file: PathBuf) -> Result<(), InitStoreFromFilePyError> {
+        if STORE.get().is_some() {
+            return Err(InitStoreFromFilePyError::StoreAlreadyInitialized);
+        }
+
         // Load the store from path including resolving the $refs where applicable.
         let store = {
             let store = Store::from_file(Some(&file))?;

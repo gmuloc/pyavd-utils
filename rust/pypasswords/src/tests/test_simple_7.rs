@@ -156,7 +156,11 @@ fn simple_7_random_source_unavailable_maps_to_specific_pyerr() {
         ));
 
         assert!(err.is_instance_of::<passwords::Simple7RandomSourceUnavailableError>(py));
-        assert!(err.value(py).to_string().contains("random salt"));
+        assert!(err.is_instance_of::<passwords::PasswordError>(py));
+        assert_eq!(
+            err.value(py).to_string(),
+            "Failed to obtain random salt from the operating system."
+        );
     });
 }
 
