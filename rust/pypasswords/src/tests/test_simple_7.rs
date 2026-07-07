@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 use super::*;
-use crate::errors::Simple7EncryptPyError;
+use crate::errors::Simple7PyError;
 
 #[test]
 fn simple_7_encrypt_decrypt_roundtrip() {
@@ -151,7 +151,7 @@ fn simple_7_decrypt_invalid_utf8_err() {
 #[test]
 fn simple_7_random_source_unavailable_maps_to_specific_pyerr() {
     with_passwords_module(|py, _module| {
-        let err = pyo3::PyErr::from(Simple7EncryptPyError::from(
+        let err = pyo3::PyErr::from(Simple7PyError::from(
             ::passwords::Simple7Error::RandomSourceUnavailable(getrandom::Error::UNSUPPORTED),
         ));
 

@@ -6,104 +6,65 @@ use pyo3::PyErr;
 
 use crate::exceptions;
 
-#[derive(Debug, derive_more::From)]
-pub(crate) enum InitStoreFromFilePyError {
+#[derive(Debug)]
+pub enum ValidationPyError {
     Load(avdschema::LoadError),
     SchemaResolver(avdschema::SchemaResolverError),
+    StoreValidate(validation::StoreValidateError),
+    ValidationResult(PyErr),
     StoreAlreadyInitialized,
+    StoreNotInitialized,
+    InvalidJsonData(String),
+    InvalidAdhocSchemaJson(serde_json::Error),
+    InvalidCoercedDataJson(serde_json::Error),
 }
 
-impl From<InitStoreFromFilePyError> for PyErr {
-    fn from(err: InitStoreFromFilePyError) -> Self {
+impl From<PyErr> for ValidationPyError {
+    fn from(err: PyErr) -> Self {
+        Self::ValidationResult(err)
+    }
+}
+
+impl From<avdschema::LoadError> for ValidationPyError {
+    fn from(err: avdschema::LoadError) -> Self {
+        Self::Load(err)
+    }
+}
+
+impl From<avdschema::SchemaResolverError> for ValidationPyError {
+    fn from(err: avdschema::SchemaResolverError) -> Self {
+        Self::SchemaResolver(err)
+    }
+}
+
+impl From<validation::StoreValidateError> for ValidationPyError {
+    fn from(err: validation::StoreValidateError) -> Self {
+        Self::StoreValidate(err)
+    }
+}
+
+impl From<ValidationPyError> for PyErr {
+    fn from(err: ValidationPyError) -> Self {
         match err {
-            InitStoreFromFilePyError::Load(err) => load_error_to_pyerr(err),
-            InitStoreFromFilePyError::SchemaResolver(err) => schema_resolver_error_to_pyerr(err),
-            InitStoreFromFilePyError::StoreAlreadyInitialized => {
+            ValidationPyError::Load(err) => load_error_to_pyerr(err),
+            ValidationPyError::SchemaResolver(err) => schema_resolver_error_to_pyerr(err),
+            ValidationPyError::StoreValidate(err) => store_validate_error_to_pyerr(err),
+            ValidationPyError::ValidationResult(err) => err,
+            ValidationPyError::StoreAlreadyInitialized => {
                 exceptions::ValidationStoreAlreadyInitializedError::new_err(
                     "Unable to initialize the schema store. \
                      Initialization can only happen once, and must be done before running any validations."
                         .to_owned(),
                 )
             }
-        }
-    }
-}
-
-#[derive(Debug, derive_more::From)]
-pub(crate) enum ValidateJsonPyError {
-    StoreNotInitialized,
-    StoreValidate(validation::StoreValidateError),
-    InvalidJsonData(String),
-    ValidationResult(PyErr),
-}
-
-impl From<ValidateJsonPyError> for PyErr {
-    fn from(err: ValidateJsonPyError) -> Self {
-        match err {
-            ValidateJsonPyError::StoreNotInitialized => store_not_initialized_error_to_pyerr(),
-            ValidateJsonPyError::StoreValidate(err) => store_validate_error_to_pyerr(err),
-            ValidateJsonPyError::InvalidJsonData(message) => invalid_json_in_data_to_pyerr(message),
-            ValidateJsonPyError::ValidationResult(err) => err,
-        }
-    }
-}
-
-#[derive(Debug, derive_more::From)]
-pub(crate) enum GetValidatedDataPyError {
-    StoreNotInitialized,
-    StoreValidate(validation::StoreValidateError),
-    InvalidJsonData(String),
-    InvalidCoercedDataJson(serde_json::Error),
-    ValidationResult(PyErr),
-}
-
-impl From<GetValidatedDataPyError> for PyErr {
-    fn from(err: GetValidatedDataPyError) -> Self {
-        match err {
-            GetValidatedDataPyError::StoreNotInitialized => store_not_initialized_error_to_pyerr(),
-            GetValidatedDataPyError::StoreValidate(err) => store_validate_error_to_pyerr(err),
-            GetValidatedDataPyError::InvalidJsonData(message) => {
-                invalid_json_in_data_to_pyerr(message)
+            ValidationPyError::StoreNotInitialized => store_not_initialized_error_to_pyerr(),
+            ValidationPyError::InvalidJsonData(message) => invalid_json_in_data_to_pyerr(message),
+            ValidationPyError::InvalidAdhocSchemaJson(err) => {
+                invalid_adhoc_schema_json_to_pyerr(err)
             }
-            GetValidatedDataPyError::InvalidCoercedDataJson(err) => {
-                exceptions::ValidationInvalidCoercedDataJsonError::new_err(format!(
-                    "Coerced validation output could not be serialized as JSON: {err}."
-                ))
+            ValidationPyError::InvalidCoercedDataJson(err) => {
+                invalid_coerced_data_json_to_pyerr(err)
             }
-            GetValidatedDataPyError::ValidationResult(err) => err,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum ValidateJsonWithAdhocSchemaPyError {
-    StoreNotInitialized,
-    InvalidJsonData(serde_json::Error),
-    InvalidAdhocSchemaJson(serde_json::Error),
-    ValidationResult(PyErr),
-}
-
-impl From<PyErr> for ValidateJsonWithAdhocSchemaPyError {
-    fn from(err: PyErr) -> Self {
-        Self::ValidationResult(err)
-    }
-}
-
-impl From<ValidateJsonWithAdhocSchemaPyError> for PyErr {
-    fn from(err: ValidateJsonWithAdhocSchemaPyError) -> Self {
-        match err {
-            ValidateJsonWithAdhocSchemaPyError::StoreNotInitialized => {
-                store_not_initialized_error_to_pyerr()
-            }
-            ValidateJsonWithAdhocSchemaPyError::InvalidJsonData(err) => {
-                invalid_json_in_data_to_pyerr(err)
-            }
-            ValidateJsonWithAdhocSchemaPyError::InvalidAdhocSchemaJson(err) => {
-                exceptions::ValidationInvalidAdhocSchemaJsonError::new_err(format!(
-                    "Invalid JSON in adhoc schema: {err}."
-                ))
-            }
-            ValidateJsonWithAdhocSchemaPyError::ValidationResult(err) => err,
         }
     }
 }
@@ -168,6 +129,18 @@ fn store_validate_error_to_pyerr(err: validation::StoreValidateError) -> PyErr {
 
 fn invalid_json_in_data_to_pyerr(message: impl std::fmt::Display) -> PyErr {
     exceptions::ValidationInvalidJsonDataError::new_err(format!("Invalid JSON in data: {message}."))
+}
+
+fn invalid_adhoc_schema_json_to_pyerr(err: serde_json::Error) -> PyErr {
+    exceptions::ValidationInvalidAdhocSchemaJsonError::new_err(format!(
+        "Invalid JSON in adhoc schema: {err}."
+    ))
+}
+
+fn invalid_coerced_data_json_to_pyerr(err: serde_json::Error) -> PyErr {
+    exceptions::ValidationInvalidCoercedDataJsonError::new_err(format!(
+        "Coerced validation output could not be serialized as JSON: {err}."
+    ))
 }
 
 fn store_not_initialized_error_to_pyerr() -> PyErr {

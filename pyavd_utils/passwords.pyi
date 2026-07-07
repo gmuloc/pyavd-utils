@@ -77,11 +77,11 @@ def cbc_decrypt(key: str, encrypted_data: str) -> str:
       CBCInvalidUtf8Error: If decrypted data is not valid UTF-8.
     """
 
-def cbc_verify(key: str, encrypted_data: str) -> str:
+def cbc_verify(key: str, encrypted_data: str) -> bool:
     """
     Verify if an encrypted password is decryptable with the given key.
 
-    It does not return the password but only raises an error if the password cannot be decrypted.
+    It does not return the decrypted password; it returns False if decryption fails.
 
     Args:
         key: The decryption key.

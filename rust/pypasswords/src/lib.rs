@@ -14,19 +14,14 @@ mod exceptions;
 #[pyo3(name = "passwords")]
 mod passwords {
 
-    use pyo3::PyResult;
     use pyo3::pyfunction;
 
     #[cfg(feature = "cbc")]
-    use crate::errors::CbcDecryptPyError;
-    #[cfg(feature = "cbc")]
-    use crate::errors::CbcEncryptPyError;
+    use crate::errors::CbcPyError;
     #[cfg(feature = "sha512")]
     use crate::errors::Sha512CryptPyError;
     #[cfg(feature = "simple-7")]
-    use crate::errors::Simple7DecryptPyError;
-    #[cfg(feature = "simple-7")]
-    use crate::errors::Simple7EncryptPyError;
+    use crate::errors::Simple7PyError;
     #[rustfmt::skip]
     #[pymodule_export]
     pub(crate) use crate::exceptions::{
@@ -60,22 +55,19 @@ mod passwords {
     #[cfg(feature = "cbc")]
     #[pyfunction]
     /// Encrypt the data with CBC `TripleDES`
-    pub(crate) fn cbc_encrypt(password: &str, data: &str) -> Result<String, CbcEncryptPyError> {
+    pub(crate) fn cbc_encrypt(password: &str, data: &str) -> Result<String, CbcPyError> {
         let result_bytes = passwords::cbc_encrypt(password.as_bytes(), data.as_bytes())?;
-        Ok(String::from_utf8(result_bytes)?)
+        Ok(String::from_utf8(result_bytes).map_err(CbcPyError::InvalidBase64Utf8)?)
     }
 
     #[cfg(feature = "cbc")]
     #[pyfunction]
     /// Decrypt the `encrypted_data` with CBC `TripleDES`
-    pub(crate) fn cbc_decrypt(
-        password: &str,
-        encrypted_data: &str,
-    ) -> Result<String, CbcDecryptPyError> {
+    pub(crate) fn cbc_decrypt(password: &str, encrypted_data: &str) -> Result<String, CbcPyError> {
         let decrypted_bytes =
             passwords::cbc_decrypt(password.as_bytes(), encrypted_data.as_bytes())?;
 
-        Ok(String::from_utf8(decrypted_bytes)?)
+        Ok(String::from_utf8(decrypted_bytes).map_err(CbcPyError::InvalidUtf8)?)
     }
 
     #[cfg(feature = "cbc")]
@@ -91,8 +83,8 @@ mod passwords {
     ///
     /// If salt is None, a random salt in the range 0-15 will be used.
     /// Raises a specific `PasswordError` subclass if the password is empty or the salt is out of range.
-    pub(crate) fn simple_7_encrypt(data: &str, salt: Option<u8>) -> PyResult<String> {
-        Ok(passwords::simple_7_encrypt(data, salt).map_err(Into::<Simple7EncryptPyError>::into)?)
+    pub(crate) fn simple_7_encrypt(data: &str, salt: Option<u8>) -> Result<String, Simple7PyError> {
+        Ok(passwords::simple_7_encrypt(data, salt)?)
     }
 
     #[cfg(feature = "simple-7")]
@@ -100,8 +92,8 @@ mod passwords {
     /// Decrypt (deobfuscate) a password from insecure type-7.
     ///
     /// Raises a specific `PasswordError` subclass if decryption fails.
-    pub(crate) fn simple_7_decrypt(data: &str) -> PyResult<String> {
-        Ok(passwords::simple_7_decrypt(data).map_err(Into::<Simple7DecryptPyError>::into)?)
+    pub(crate) fn simple_7_decrypt(data: &str) -> Result<String, Simple7PyError> {
+        Ok(passwords::simple_7_decrypt(data)?)
     }
 }
 

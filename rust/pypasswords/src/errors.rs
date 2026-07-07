@@ -19,65 +19,44 @@ impl From<Sha512CryptPyError> for PyErr {
 }
 
 #[cfg(feature = "cbc")]
-#[derive(Debug, derive_more::From)]
-pub(crate) enum CbcEncryptPyError {
+#[derive(Debug)]
+pub(crate) enum CbcPyError {
     Cbc(passwords::CbcError),
     InvalidBase64Utf8(std::string::FromUtf8Error),
-}
-
-#[cfg(feature = "cbc")]
-impl From<CbcEncryptPyError> for PyErr {
-    fn from(err: CbcEncryptPyError) -> Self {
-        match err {
-            CbcEncryptPyError::Cbc(err) => cbc_error_to_pyerr(&err),
-            CbcEncryptPyError::InvalidBase64Utf8(err) => {
-                exceptions::CBCInvalidBase64Utf8Error::new_err(format!(
-                    "Base64 output contained invalid UTF-8: {err}"
-                ))
-            }
-        }
-    }
-}
-
-#[cfg(feature = "cbc")]
-#[derive(Debug, derive_more::From)]
-pub(crate) enum CbcDecryptPyError {
-    Cbc(passwords::CbcError),
     InvalidUtf8(std::string::FromUtf8Error),
 }
 
 #[cfg(feature = "cbc")]
-impl From<CbcDecryptPyError> for PyErr {
-    fn from(err: CbcDecryptPyError) -> Self {
+impl From<passwords::CbcError> for CbcPyError {
+    fn from(err: passwords::CbcError) -> Self {
+        Self::Cbc(err)
+    }
+}
+
+#[cfg(feature = "cbc")]
+impl From<CbcPyError> for PyErr {
+    fn from(err: CbcPyError) -> Self {
         match err {
-            CbcDecryptPyError::Cbc(err) => cbc_error_to_pyerr(&err),
-            CbcDecryptPyError::InvalidUtf8(err) => exceptions::CBCInvalidUtf8Error::new_err(
-                format!("{}: {err}", passwords::CbcError::InvalidUtf8),
+            CbcPyError::Cbc(err) => cbc_error_to_pyerr(&err),
+            CbcPyError::InvalidBase64Utf8(err) => exceptions::CBCInvalidBase64Utf8Error::new_err(
+                format!("Base64 output contained invalid UTF-8: {err}"),
             ),
+            CbcPyError::InvalidUtf8(err) => exceptions::CBCInvalidUtf8Error::new_err(format!(
+                "{}: {err}",
+                passwords::CbcError::InvalidUtf8
+            )),
         }
     }
 }
 
 #[cfg(feature = "simple-7")]
 #[derive(Debug, derive_more::From)]
-pub(crate) struct Simple7EncryptPyError(passwords::Simple7Error);
+pub(crate) struct Simple7PyError(passwords::Simple7Error);
 
 #[cfg(feature = "simple-7")]
-impl From<Simple7EncryptPyError> for PyErr {
-    fn from(err: Simple7EncryptPyError) -> Self {
-        let Simple7EncryptPyError(err) = err;
-        simple_7_error_to_pyerr(&err)
-    }
-}
-
-#[cfg(feature = "simple-7")]
-#[derive(Debug, derive_more::From)]
-pub(crate) struct Simple7DecryptPyError(passwords::Simple7Error);
-
-#[cfg(feature = "simple-7")]
-impl From<Simple7DecryptPyError> for PyErr {
-    fn from(err: Simple7DecryptPyError) -> Self {
-        let Simple7DecryptPyError(err) = err;
+impl From<Simple7PyError> for PyErr {
+    fn from(err: Simple7PyError) -> Self {
+        let Simple7PyError(err) = err;
         simple_7_error_to_pyerr(&err)
     }
 }
