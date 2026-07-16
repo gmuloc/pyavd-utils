@@ -11,16 +11,12 @@
     {
       "description": "Maintain production and build dependencies for Python",
       "matchManagers": [
-        "pep621",
-        "pip_requirements",
-        "pipenv",
-        "poetry"
+        "pep621"
       ],
       "matchDepTypes": [
         "build-system.requires",
         "project.dependencies",
-        "project.optional-dependencies",
-        "production"
+        "project.optional-dependencies"
       ],
       "semanticCommitType": "chore",
       "commitMessagePrefix": "Bump(requirements): "
@@ -28,16 +24,10 @@
     {
       "description": "Maintain development dependencies for Python",
       "matchManagers": [
-        "pep621",
-        "pip_requirements",
-        "pipenv",
-        "poetry"
+        "pep621"
       ],
       "matchDepTypes": [
-        "dependency-groups",
-        "tool.pdm.dev-dependencies",
-        "tool.uv.dev-dependencies",
-        "development"
+        "dependency-groups"
       ],
       "semanticCommitType": "ci",
       "commitMessagePrefix": "CI(requirements): "
@@ -55,6 +45,18 @@
       "matchManagers": [
         "cargo"
       ],
+      "semanticCommitType": "chore",
+      "commitMessagePrefix": "Bump(rust): "
+    },
+    {
+      "description": "Maintain the pinned Rust toolchain",
+      "matchManagers": [
+        "rust-toolchain"
+      ],
+      "matchDepTypes": [
+        "toolchain"
+      ],
+      "rangeStrategy": "pin",
       "semanticCommitType": "chore",
       "commitMessagePrefix": "Bump(rust): "
     }
