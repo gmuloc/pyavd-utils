@@ -3,11 +3,30 @@
 # See https://pre-commit.com/hooks.html for more hooks
 ci:
   autoupdate_commit_msg: "CI: pre-commit autoupdate"
-  skip: [pyright, cargo-fmt-nightly, cargo-check, cargo-clippy, cargo-about, cargo-deny]
+  autofix_prs: false
+  # Keep pre-commit.ci for autoupdate only. Run hooks through autofix.ci.
+  skip:
+    - trailing-whitespace
+    - end-of-file-fixer
+    - check-added-large-files
+    - check-merge-conflict
+    - insert-license
+    - cargo-fmt-nightly
+    - cargo-check
+    - cargo-clippy
+    - cargo-deny
+    - cargo-about
+    - ruff
+    - ruff-format
+    - pyright
+    - pylint
+    - codespell
+    - markdownlint-cli2
+    - zizmor
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: trailing-whitespace
         name: Trims trailing whitespace.
@@ -21,7 +40,7 @@ repos:
         name: Checks for files that contain merge conflict strings.
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.6
+    rev: ad1b27d73581aa16cca06fc4a0761fc563ffe8e8  # frozen: v1.5.6
     hooks:
       - id: insert-license
         name: Check and insert license on Python files.
@@ -62,7 +81,7 @@ repos:
           - "//"
 
   - repo: https://github.com/arista-netdevops-community/pre-commit-hooks
-    rev: v0.1.3
+    rev: e79ab81e3d36a37a620c0b2cefd262b82a1943fd  # frozen: v0.1.3
     hooks:
       - id: cargo-fmt-nightly
         args:
@@ -99,7 +118,7 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.15.15
+    rev: 01a675ea018f2fb714478a5ffb83fcea8374bb06  # frozen: v0.15.21
     hooks:
       # Run the linter.
       - id: ruff
@@ -109,7 +128,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.409
+    rev: 392b6ba8e54be6d603e02e9f8d601d27b7a48d12  # frozen: v1.1.411
     hooks:
       - id: pyright
         name: PyRight static type checker
@@ -118,7 +137,7 @@ repos:
           - 'pytest>=8.2.0'
 
   - repo: https://github.com/pycqa/pylint
-    rev: "v4.0.5"
+    rev: "8a396357098337ba8be714fffdf2d00947a9778c"  # frozen: v4.0.6
     hooks:
       - id: pylint # Use pylintrc file in repository
         name: Check for Linting errors on Python.
@@ -126,7 +145,7 @@ repos:
         types: [python]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a  # frozen: v2.4.2
     hooks:
       - id: codespell
         name: Check for common misspellings in text files.
@@ -138,13 +157,13 @@ repos:
           - '--ignore-words=.github/ignore-codespell-words'  # Ignore words listed in this file
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.22.1
+    rev: 534166213006ec869b773b7ed8c6ebeaad1165d0  # frozen: v0.23.0
     hooks:
       - id: markdownlint-cli2
         name: Check for Linting errors on Markdown files with settings defined in `.markdownlint-cli2.yaml`.
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
+    rev: e3eebf65325ccc992422292cb7a4baee967cf815  # frozen: v1.26.1
     hooks:
       - id: zizmor
         name: Check GitHub Actions with zizmor

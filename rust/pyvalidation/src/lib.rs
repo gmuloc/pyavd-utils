@@ -6,9 +6,7 @@
     missing_docs,
     missing_debug_implementations,
     clippy::fn_params_excessive_bools,
-    clippy::indexing_slicing,
     clippy::manual_let_else,
-    clippy::map_err_ignore,
     clippy::needless_pass_by_value,
     clippy::module_name_repetitions,
     clippy::struct_excessive_bools,
@@ -75,14 +73,14 @@ pub mod validation {
         })
     }
 
-    #[pyclass(frozen, get_all)]
+    #[pyclass(from_py_object, frozen, get_all)]
     #[derive(Clone)]
     pub struct Violation {
         pub message: String,
         pub path: Vec<String>,
     }
 
-    #[pyclass(frozen, get_all)]
+    #[pyclass(from_py_object, frozen, get_all)]
     #[derive(Clone)]
     pub struct Deprecation {
         pub message: String,
@@ -93,14 +91,14 @@ pub mod validation {
         pub url: Option<String>,
     }
 
-    #[pyclass(frozen, get_all)]
+    #[pyclass(from_py_object, frozen, get_all)]
     #[derive(Clone)]
     pub struct IgnoredEosConfigKey {
         pub message: String,
         pub path: Vec<String>,
     }
 
-    #[pyclass(get_all, set_all)]
+    #[pyclass(from_py_object, get_all, set_all)]
     #[derive(Clone, Default)]
     pub struct Configuration {
         pub ignore_required_keys_on_root_dict: bool,
@@ -140,7 +138,7 @@ pub mod validation {
         }
     }
 
-    #[pyclass(frozen, get_all)]
+    #[pyclass(from_py_object, frozen, get_all)]
     #[derive(Clone, Default)]
     pub struct ValidationResult {
         pub violations: Vec<Violation>,
@@ -221,7 +219,7 @@ pub mod validation {
         }?;
 
         // Insert the resolved store into the OnceLock.
-        STORE.set(store).map_err(|_| {
+        STORE.set(store).map_err(|_store| {
             PyRuntimeError::new_err(
                 "Unable to initialize the schema store. \
                  Initialization can only happen once, and must be done before running any validations.".to_owned(),

@@ -194,7 +194,7 @@ fn validate_unique_keys<'a, S: ValidatableSequence<'a>>(
                         // We found at least one other item, so we know we have a duplicate
                         // Add violations for all duplicates in both directions.
                         for (seen_item_trail, seen_value) in seen_item_trails.iter() {
-                            ctx.add_duplicate_violation_pair_for(
+                            ctx.add_duplicate_value_violation_pair_for(
                                 *seen_value,
                                 seen_item_trail,
                                 value,
@@ -210,8 +210,8 @@ fn validate_unique_keys<'a, S: ValidatableSequence<'a>>(
 
 /// Convert a `ValidatableValue` to a string for comparison purposes.
 fn value_to_string<V: ValidatableValue>(value: &V) -> String {
-    if let Some(s) = value.as_str() {
-        return s.into_owned();
+    if let Some(string) = value.as_str() {
+        return string.into_owned();
     }
     if value.is_null() {
         return "__NULL__".to_owned();

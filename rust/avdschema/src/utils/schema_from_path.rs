@@ -2,38 +2,41 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 
+use std::borrow::Cow;
+
 use ordermap::OrderMap;
 
 use crate::SchemaDataValue;
 use crate::Store;
 use crate::any::AnySchema;
 use crate::dict::Dict;
-use crate::dict::DynamicKeyInfo;
+use crate::dict::DictKeyMatch;
 use crate::dict::DynamicKeyOverrides;
 use crate::resolve::errors::SchemaResolverError;
 use crate::resolve::resolve_ref::resolve_ref;
 use crate::store::SchemaStoreError;
 
-// Keys that are accepted by the schema from either keys or dynamic keys.
+// Keys that are accepted by the schema from keys or dynamic keys.
 #[derive(Debug, PartialEq)]
-pub enum SchemaKey {
-    StaticKey,
-    DynamicKey { dynamic_key_path: String },
+pub enum SchemaKey<'a> {
+    Static,
+    Dynamic { dynamic_key_path: Cow<'a, str> },
 }
-impl SchemaKey {
+
+impl SchemaKey<'_> {
     /// Return a schema $ref like
-    /// `"eos_config#/keys/somekey/items/"` or
-    /// `"avd_design#/dynamic_keys/connected_endpoint_keys.key"`
-    /// For dynamic keys the first item of the path is replaced with with dynamic key path.
+    /// `eos_config#/keys/somekey/items/` or
+    /// `avd_design#/dynamic_keys/connected_endpoint_keys.key`
+    /// For dynamic keys the first item of the path is replaced with the dynamic key path.
     pub fn get_schema_ref_from_path(&self, schema_name: &str, data_path: &[String]) -> String {
         let mut path = data_path.iter();
         let mut schema_ref = format!("{schema_name}#");
         match path.next() {
             Some(root_key) => match self {
-                SchemaKey::DynamicKey { dynamic_key_path } => {
+                SchemaKey::Dynamic { dynamic_key_path } => {
                     schema_ref.push_str(format!("/dynamic_keys/{dynamic_key_path}").as_str());
                 }
-                SchemaKey::StaticKey => schema_ref.push_str(format!("/keys/{root_key}").as_str()),
+                SchemaKey::Static => schema_ref.push_str(format!("/keys/{root_key}").as_str()),
             },
             None => return schema_ref,
         }
@@ -45,22 +48,24 @@ impl SchemaKey {
                 schema_ref.push_str(step);
             }
         }
+
         schema_ref
     }
 }
 
+// TODO: Consider removing SchemaKeys since it is no longer used internally.
 #[derive(Debug, PartialEq)]
-pub struct SchemaKeys {
-    pub keys: OrderMap<String, SchemaKey>,
+pub struct SchemaKeys<'a> {
+    pub keys: OrderMap<String, SchemaKey<'a>>,
 }
-impl SchemaKeys {
-    pub fn try_from_schema_with_value<'a, V>(
-        schema: &AnySchema,
+impl<'schema> SchemaKeys<'schema> {
+    pub fn try_from_schema_with_value<'value, V>(
+        schema: &'schema AnySchema,
         value: V,
         dynamic_key_overrides: Option<&DynamicKeyOverrides>,
     ) -> Result<Self, SchemaKeysError>
     where
-        V: SchemaDataValue<'a>,
+        V: SchemaDataValue<'value>,
     {
         let dict_schema: &Dict = schema
             .try_into()
@@ -72,7 +77,7 @@ impl SchemaKeys {
                 .as_ref()
                 .map(|keys| {
                     keys.keys()
-                        .map(|key| (key.to_owned(), SchemaKey::StaticKey))
+                        .map(|key| (key.to_owned(), SchemaKey::Static))
                         .collect()
                 })
                 .unwrap_or_default(),
@@ -82,19 +87,19 @@ impl SchemaKeys {
             .get_dynamic_keys(dict, dynamic_key_overrides)
             .unwrap_or_default()
         {
-            if !schema_keys.keys.contains_key(&key) {
-                schema_keys
-                    .keys
-                    .insert(key, SchemaKey::from(&dynamic_key_info));
-            }
+            schema_keys
+                .keys
+                .entry(key)
+                .or_insert_with(|| SchemaKey::from(&dynamic_key_info));
         }
+
         Ok(schema_keys)
     }
 }
-impl From<&DynamicKeyInfo<'_>> for SchemaKey {
-    fn from(value: &DynamicKeyInfo) -> Self {
-        Self::DynamicKey {
-            dynamic_key_path: value.dynamic_key_path.clone(),
+impl<'a> From<&crate::dict::DynamicKeyInfo<'a>> for SchemaKey<'a> {
+    fn from(value: &crate::dict::DynamicKeyInfo<'a>) -> Self {
+        Self::Dynamic {
+            dynamic_key_path: Cow::Borrowed(value.dynamic_key_path),
         }
     }
 }
@@ -126,14 +131,27 @@ pub fn get_schema_from_path<'store, 'value>(
     match path.next() {
         None => Ok(Some(schema)),
         Some(root_key) => {
-            let schema_keys =
-                SchemaKeys::try_from_schema_with_value(schema, data_value, dynamic_key_overrides)?;
-            match schema_keys.keys.get(root_key) {
-                None => Ok(None),
-                Some(schema_key) => {
-                    let schema_ref = schema_key.get_schema_ref_from_path(schema_name, data_path);
+            let dict_schema: &Dict = schema
+                .try_into()
+                .map_err(|_err| SchemaKeysError::SchemaNotDict)?;
+            let dict = data_value
+                .as_mapping()
+                .ok_or(GetSchemaFromPathError::Keys(SchemaKeysError::ValueNotADict))?;
+            let resolved_dict_keys = dict_schema.resolve_dict_keys(dict, dynamic_key_overrides);
+            match resolved_dict_keys.resolve(root_key) {
+                DictKeyMatch::Static(_) => {
+                    let schema_ref =
+                        SchemaKey::Static.get_schema_ref_from_path(schema_name, data_path);
                     Ok(Some(resolve_ref(&schema_ref, store)?))
                 }
+                DictKeyMatch::Dynamic(dynamic_key_info) => {
+                    let schema_ref = SchemaKey::Dynamic {
+                        dynamic_key_path: Cow::Borrowed(dynamic_key_info.dynamic_key_path),
+                    }
+                    .get_schema_ref_from_path(schema_name, data_path);
+                    Ok(Some(resolve_ref(&schema_ref, store)?))
+                }
+                DictKeyMatch::UnknownKey => Ok(None),
             }
         }
     }
@@ -198,23 +216,23 @@ mod tests {
         assert_eq!(
             schema_keys.keys,
             OrderMap::from([
-                ("outer".into(), SchemaKey::StaticKey),
-                ("another_key".into(), SchemaKey::StaticKey),
+                ("outer".into(), SchemaKey::Static),
+                ("another_key".into(), SchemaKey::Static),
                 (
                     "one".into(),
-                    SchemaKey::DynamicKey {
+                    SchemaKey::Dynamic {
                         dynamic_key_path: "outer.inner".into()
                     }
                 ),
                 (
                     "two".into(),
-                    SchemaKey::DynamicKey {
+                    SchemaKey::Dynamic {
                         dynamic_key_path: "outer.inner".into()
                     }
                 ),
                 (
                     "three".into(),
-                    SchemaKey::DynamicKey {
+                    SchemaKey::Dynamic {
                         dynamic_key_path: "outer.inner".into()
                     }
                 ),
@@ -326,7 +344,7 @@ mod tests {
         let schema = store.get("eos_config").unwrap();
         let schema_keys = SchemaKeys::try_from_schema_with_value(schema, &value, None).unwrap();
 
-        assert_eq!(schema_keys.keys.get("key2"), Some(&SchemaKey::StaticKey));
+        assert_eq!(schema_keys.keys.get("key2"), Some(&SchemaKey::Static));
     }
 
     #[test]
@@ -391,7 +409,7 @@ mod tests {
 
         assert_eq!(
             schema_keys.keys.get("l3spine"),
-            Some(&SchemaKey::DynamicKey {
+            Some(&SchemaKey::Dynamic {
                 dynamic_key_path: "network_services_keys.name".into()
             })
         );

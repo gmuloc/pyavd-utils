@@ -1,9 +1,16 @@
 // Copyright (c) 2025-2026 Arista Networks, Inc.
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
+pub mod dynamic_keys;
 
 use std::sync::OnceLock;
 
+use dynamic_keys::CachedDefaultDynamicKeys;
+pub use dynamic_keys::DefaultDynamicKeys;
+pub use dynamic_keys::DictKeyMatch;
+pub use dynamic_keys::DynamicKeyInfo;
+pub use dynamic_keys::DynamicKeyOverrides;
+use dynamic_keys::ResolvedDictKeys;
 use ordermap::OrderMap;
 use serde::Deserialize;
 use serde::Serialize;
@@ -19,17 +26,6 @@ use crate::any::Shortcuts;
 use crate::base::Deprecation;
 use crate::utils::schema_data::SchemaDataMapping;
 use crate::utils::schema_data::SchemaDataSequence as _;
-
-pub type DefaultDynamicKeys = OrderMap<String, Vec<String>>;
-
-/// Maps a concrete input key to the dynamic key schema path that should validate it.
-///
-/// Used when the dynamic key cannot be inferred from input/default schema data,
-/// for example when LSP comments identify the intended dynamic-key source.
-/// Callers resolving both static and dynamic schema keys should give static
-/// schema keys precedence over these overrides.
-pub type DynamicKeyOverrides = OrderMap<String, String>;
-type CachedDefaultDynamicKeys = Option<Box<DefaultDynamicKeys>>;
 
 /// AVD Schema for dictionary data.
 #[skip_serializing_none]
@@ -96,7 +92,7 @@ impl<'a> Dict {
                             (
                                 key,
                                 DynamicKeyInfo {
-                                    dynamic_key_path: dynamic_key_path.clone(),
+                                    dynamic_key_path,
                                     schema: dynamic_key_schema,
                                 },
                             )
@@ -106,7 +102,9 @@ impl<'a> Dict {
 
             if let Some(overrides) = overrides {
                 for (concrete_key, dynamic_key_path) in overrides {
-                    let Some(dynamic_key_schema) = dynamic_keys.get(dynamic_key_path) else {
+                    let Some((schema_dynamic_key_path, dynamic_key_schema)) =
+                        dynamic_keys.get_key_value(dynamic_key_path)
+                    else {
                         continue;
                     };
                     if dynamic_key_schema.is_removed() {
@@ -115,7 +113,7 @@ impl<'a> Dict {
                     resolved_dynamic_keys.insert(
                         concrete_key.clone(),
                         DynamicKeyInfo {
-                            dynamic_key_path: dynamic_key_path.clone(),
+                            dynamic_key_path: schema_dynamic_key_path,
                             schema: dynamic_key_schema,
                         },
                     );
@@ -173,7 +171,7 @@ impl<'a> Dict {
         })
     }
 
-    pub(self) fn get_default_for_key(&self, key: &str) -> Option<Value> {
+    pub fn get_default_for_key(&self, key: &str) -> Option<Value> {
         self.keys
             .as_ref()
             .and_then(|keys| keys.get(key).and_then(Shortcuts::default_))
@@ -212,6 +210,20 @@ impl<'a> Dict {
                     .collect::<Vec<String>>()
             })
     }
+
+    pub fn resolve_dict_keys<'input, M>(
+        &'a self,
+        dict: M,
+        dynamic_keys_overrides: Option<&DynamicKeyOverrides>,
+    ) -> ResolvedDictKeys<'a>
+    where
+        M: SchemaDataMapping<'input>,
+    {
+        ResolvedDictKeys {
+            static_keys: self.keys.as_ref(),
+            dynamic_keys: self.get_dynamic_keys(dict, dynamic_keys_overrides),
+        }
+    }
 }
 
 impl Shortcuts for Dict {
@@ -241,14 +253,6 @@ impl<'x> TryFrom<&'x AnySchema> for &'x Dict {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct DynamicKeyInfo<'a> {
-    /// The dynamic key path defined in the schema that led to this dynamic key.
-    pub dynamic_key_path: String,
-    /// The schema for this dynamic key.
-    pub schema: &'a AnySchema,
-}
-
 #[cfg(test)]
 mod tests {
     use ordermap::OrderMap;
@@ -265,6 +269,7 @@ mod tests {
     use crate::boolean::Bool;
     use crate::int::Int;
     use crate::list::List;
+    use crate::str::Str;
     use crate::utils::test_utils::get_test_dict_schema;
 
     fn removed_bool_schema() -> AnySchema {
@@ -313,21 +318,21 @@ mod tests {
                 (
                     "one".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "outer.inner".to_owned(),
+                        dynamic_key_path: "outer.inner",
                         schema: &dynamic_key_schema,
                     }
                 ),
                 (
                     "two".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "outer.inner".to_owned(),
+                        dynamic_key_path: "outer.inner",
                         schema: &dynamic_key_schema,
                     }
                 ),
                 (
                     "three".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "outer.inner".to_owned(),
+                        dynamic_key_path: "outer.inner",
                         schema: &dynamic_key_schema,
                     }
                 ),
@@ -352,21 +357,21 @@ mod tests {
                 (
                     "one".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "list".to_owned(),
+                        dynamic_key_path: "list",
                         schema: &dynamic_key_schema,
                     }
                 ),
                 (
                     "two".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "list".to_owned(),
+                        dynamic_key_path: "list",
                         schema: &dynamic_key_schema,
                     }
                 ),
                 (
                     "three".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "list".to_owned(),
+                        dynamic_key_path: "list",
                         schema: &dynamic_key_schema,
                     }
                 ),
@@ -391,14 +396,14 @@ mod tests {
                 (
                     "one".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "outer.inner".to_owned(),
+                        dynamic_key_path: "outer.inner",
                         schema: dynamic_key_schema,
                     }
                 ),
                 (
                     "two".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "outer.inner".to_owned(),
+                        dynamic_key_path: "outer.inner",
                         schema: dynamic_key_schema,
                     }
                 ),
@@ -423,7 +428,7 @@ mod tests {
             Some(OrderMap::from_iter([(
                 "dyn_key1_int".to_owned(),
                 DynamicKeyInfo {
-                    dynamic_key_path: "outer.inner".to_owned(),
+                    dynamic_key_path: "outer.inner",
                     schema: dynamic_key_schema,
                 }
             ),]))
@@ -449,14 +454,14 @@ mod tests {
                 (
                     "one".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "list".to_owned(),
+                        dynamic_key_path: "list",
                         schema: &dynamic_key_schema,
                     }
                 ),
                 (
                     "two".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "list".to_owned(),
+                        dynamic_key_path: "list",
                         schema: &dynamic_key_schema,
                     }
                 ),
@@ -475,7 +480,7 @@ mod tests {
                     items: Some(Box::new(AnySchema::Dict(Dict {
                         keys: Some(OrderMap::from_iter([(
                             "name".to_owned(),
-                            crate::str::Str::default().into(),
+                            Str::default().into(),
                         )])),
                         ..Default::default()
                     }))),
@@ -507,7 +512,7 @@ mod tests {
             Some(OrderMap::from_iter([(
                 "l3spine".to_owned(),
                 DynamicKeyInfo {
-                    dynamic_key_path: "network_services_keys.name".to_owned(),
+                    dynamic_key_path: "network_services_keys.name",
                     schema: &override_dynamic_key_schema,
                 }
             )]))
@@ -543,14 +548,14 @@ mod tests {
                 (
                     "kept".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "kept_list".to_owned(),
+                        dynamic_key_path: "kept_list",
                         schema: &kept_dynamic_key_schema,
                     }
                 ),
                 (
                     "later".to_owned(),
                     DynamicKeyInfo {
-                        dynamic_key_path: "later_list".to_owned(),
+                        dynamic_key_path: "later_list",
                         schema: &later_dynamic_key_schema,
                     }
                 ),

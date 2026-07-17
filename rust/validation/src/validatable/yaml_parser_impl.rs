@@ -5,6 +5,7 @@
 //! Implementation of `ValidatableValue` traits for `yaml_parser` types.
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 use yaml_parser::Integer;
 use yaml_parser::MappingPair;
@@ -12,11 +13,13 @@ use yaml_parser::Node;
 use yaml_parser::SequenceItem;
 use yaml_parser::Value;
 
+use super::MappingDuplicateKey;
 use super::ValidatableMapping;
 use super::ValidatableMappingPair;
 use super::ValidatableSequence;
 use super::ValidatableValue;
 use super::integral_float_to_i64;
+use crate::feedback::SourceSpan;
 
 // === ValidatableValue for yaml_parser::Node ===
 
@@ -51,10 +54,10 @@ impl<'input> ValidatableValue for Node<'input> {
     fn as_str(&self) -> Option<Cow<'_, str>> {
         match &self.value {
             Value::String(cow) => Some(Cow::Borrowed(cow.as_ref())),
-            Value::Int(i) => Some(i.to_decimal_string()),
-            Value::Float(f) => Some(Cow::Owned(f.to_string())),
+            Value::Int(integer) => Some(integer.to_decimal_string()),
+            Value::Float(float) => Some(Cow::Owned(float.to_string())),
             // Using Title case to match Python behavior
-            Value::Bool(b) => Some(Cow::Borrowed(if *b { "True" } else { "False" })),
+            Value::Bool(boolean) => Some(Cow::Borrowed(if *boolean { "True" } else { "False" })),
             _ => None,
         }
     }
@@ -63,15 +66,15 @@ impl<'input> ValidatableValue for Node<'input> {
         match &self.value {
             Value::Int(integer) => integer.as_i64(),
             Value::Float(float) => integral_float_to_i64(*float),
-            Value::String(s) => s.parse().ok(),
-            Value::Bool(b) => Some(i64::from(*b)),
+            Value::String(string) => string.parse().ok(),
+            Value::Bool(boolean) => Some(i64::from(*boolean)),
             _ => None,
         }
     }
 
     fn as_bool(&self) -> Option<bool> {
         match &self.value {
-            Value::Bool(b) => Some(*b),
+            Value::Bool(boolean) => Some(*boolean),
             _ => None,
         }
     }
@@ -164,10 +167,12 @@ impl<'input> ValidatableValue for Node<'input> {
         use crate::feedback::Value as FV;
         match &self.value {
             Value::Null => FV::Null(),
-            Value::Bool(b) => FV::Bool(*b),
-            Value::Int(i) => i.as_i64().map_or_else(|| FV::Str(i.to_string()), FV::Int),
-            Value::Float(f) => FV::Float(*f),
-            Value::String(s) => FV::Str(s.to_string()),
+            Value::Bool(boolean) => FV::Bool(*boolean),
+            Value::Int(integer) => integer
+                .as_i64()
+                .map_or_else(|| FV::Str(integer.to_string()), FV::Int),
+            Value::Float(float) => FV::Float(*float),
+            Value::String(string) => FV::Str(string.to_string()),
             Value::Sequence(seq) => FV::List(
                 seq.iter()
                     .map(|item| item.node.to_feedback_value())
@@ -188,8 +193,8 @@ impl<'input> ValidatableValue for Node<'input> {
         matches!(self.value, Value::Float(_))
     }
 
-    fn source_span(&self) -> Option<crate::feedback::SourceSpan> {
-        Some(crate::feedback::SourceSpan {
+    fn source_span(&self) -> Option<SourceSpan> {
+        Some(SourceSpan {
             start: self.span.start_usize(),
             end: self.span.end_usize(),
         })
@@ -212,17 +217,17 @@ pub struct NodeMapping<'a, 'input> {
 /// schema keys even if they have a scalar textual representation.
 fn schema_key_to_string<'a>(node: &'a Node<'_>) -> Option<Cow<'a, str>> {
     match &node.value {
-        Value::String(s) => Some(Cow::Borrowed(s.as_ref())),
+        Value::String(string) => Some(Cow::Borrowed(string.as_ref())),
         _ => None,
     }
 }
 
 fn scalar_key_to_string<'a>(node: &'a Node<'_>) -> Option<Cow<'a, str>> {
     match &node.value {
-        Value::String(s) => Some(Cow::Borrowed(s.as_ref())),
-        Value::Int(i) => Some(i.to_decimal_string()),
-        Value::Float(f) => Some(Cow::Owned(f.to_string())),
-        Value::Bool(b) => Some(Cow::Borrowed(if *b { "true" } else { "false" })),
+        Value::String(string) => Some(Cow::Borrowed(string.as_ref())),
+        Value::Int(integer) => Some(integer.to_decimal_string()),
+        Value::Float(float) => Some(Cow::Owned(float.to_string())),
+        Value::Bool(boolean) => Some(Cow::Borrowed(if *boolean { "true" } else { "false" })),
         _ => None,
     }
 }
@@ -247,6 +252,39 @@ impl<'a, 'input: 'a> ValidatableMapping<'a> for NodeMapping<'a, 'input> {
             }
         }
         None
+    }
+
+    fn duplicate_keys(&self) -> Vec<MappingDuplicateKey<'a>> {
+        if self.pairs.len() <= 1 {
+            return Vec::new();
+        }
+
+        let mut duplicate_keys: Vec<MappingDuplicateKey<'a>> = Vec::new();
+        let mut seen_keys: HashMap<&str, usize> = HashMap::with_capacity(self.pairs.len());
+        for pair in self.pairs {
+            let Value::String(key) = &pair.key.value else {
+                continue;
+            };
+            let key = key.as_ref();
+            let span = SourceSpan {
+                start: pair.key.span.start_usize(),
+                end: pair.key.span.end_usize(),
+            };
+
+            if let Some(index) = seen_keys.get(key) {
+                if let Some(duplicate_key) = duplicate_keys.get_mut(*index) {
+                    duplicate_key.spans.push(Some(span));
+                }
+            } else {
+                seen_keys.insert(key, duplicate_keys.len());
+                duplicate_keys.push(MappingDuplicateKey {
+                    key,
+                    spans: vec![Some(span)],
+                });
+            }
+        }
+        duplicate_keys.retain(|duplicate_key| duplicate_key.spans.len() > 1);
+        duplicate_keys
     }
 
     fn as_schema_data_mapping(&self) -> Self::SchemaDataMapping<'_> {
@@ -307,10 +345,10 @@ impl<'a, 'input: 'a> ValidatableMappingPair<'a> for NodeMappingPair<'a, 'input> 
     /// null, and complex YAML keys can still produce a useful validation path.
     fn display_key(&self) -> Cow<'a, str> {
         match &self.pair.key.value {
-            Value::String(s) => Cow::Borrowed(s.as_ref()),
-            Value::Int(i) => i.to_decimal_string(),
-            Value::Float(f) => Cow::Owned(f.to_string()),
-            Value::Bool(b) => Cow::Borrowed(if *b { "true" } else { "false" }),
+            Value::String(string) => Cow::Borrowed(string.as_ref()),
+            Value::Int(integer) => integer.to_decimal_string(),
+            Value::Float(float) => Cow::Owned(float.to_string()),
+            Value::Bool(boolean) => Cow::Borrowed(if *boolean { "true" } else { "false" }),
             Value::Null => Cow::Borrowed("null"),
             Value::Sequence(_) | Value::Mapping(_) => Cow::Borrowed("<complex key>"),
         }
@@ -334,8 +372,8 @@ impl<'a, 'input: 'a> ValidatableMappingPair<'a> for NodeMappingPair<'a, 'input> 
     }
 
     /// Return the span for the original YAML key node.
-    fn key_span(&self) -> Option<crate::feedback::SourceSpan> {
-        Some(crate::feedback::SourceSpan {
+    fn key_span(&self) -> Option<SourceSpan> {
+        Some(SourceSpan {
             start: self.pair.key.span.start_usize(),
             end: self.pair.key.span.end_usize(),
         })
@@ -383,6 +421,7 @@ mod tests {
     use yaml_parser::SequenceItem;
     use yaml_parser::Value;
 
+    use crate::feedback::SourceSpan;
     use crate::validatable::ValidatableMapping;
     use crate::validatable::ValidatableMappingPair as _;
     use crate::validatable::ValidatableSequence;
@@ -392,8 +431,8 @@ mod tests {
         yaml_parser::Span::new(0..1)
     }
 
-    fn string_node(s: &str) -> Node<'static> {
-        Node::new(Value::String(Cow::Owned(s.to_owned())), make_span())
+    fn string_node(string: &str) -> Node<'static> {
+        Node::new(Value::String(Cow::Owned(string.to_owned())), make_span())
     }
 
     fn int_node(i: i64) -> Node<'static> {
@@ -406,6 +445,13 @@ mod tests {
 
     fn float_node(value: f64) -> Node<'static> {
         Node::new(Value::Float(value), make_span())
+    }
+
+    fn string_node_with_span(string: &str, span: std::ops::Range<u32>) -> Node<'static> {
+        Node::new(
+            Value::String(Cow::Owned(string.to_owned())),
+            yaml_parser::Span::new(span),
+        )
     }
 
     #[test]
@@ -551,6 +597,82 @@ mod tests {
             .collect();
         assert!(keys.contains(&"name".to_owned()));
         assert!(keys.contains(&"age".to_owned()));
+    }
+
+    #[test]
+    fn test_yaml_mapping_reports_each_duplicate_string_key() {
+        let node = Node::new(
+            Value::Mapping(vec![
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("name", 0..4),
+                    string_node("Alice"),
+                ),
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("age", 12..15),
+                    int_node(30),
+                ),
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("name", 20..24),
+                    string_node("Bob"),
+                ),
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("name", 30..34),
+                    string_node("Carol"),
+                ),
+            ]),
+            make_span(),
+        );
+        let mapping = node.as_mapping().expect("should be a mapping");
+
+        let duplicate_keys = mapping.duplicate_keys();
+
+        assert_eq!(duplicate_keys.len(), 1);
+        assert_eq!(duplicate_keys[0].key, "name");
+        assert_eq!(
+            duplicate_keys[0].spans,
+            vec![
+                Some(SourceSpan { start: 0, end: 4 }),
+                Some(SourceSpan { start: 20, end: 24 }),
+                Some(SourceSpan { start: 30, end: 34 }),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_yaml_mapping_duplicate_keys_ignores_non_string_keys() {
+        let node = Node::new(
+            Value::Mapping(vec![
+                MappingPair::new(make_span(), int_node(123), string_node("not a key")),
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("name", 10..14),
+                    string_node("Alice"),
+                ),
+                MappingPair::new(
+                    make_span(),
+                    string_node_with_span("name", 20..24),
+                    string_node("Bob"),
+                ),
+            ]),
+            make_span(),
+        );
+        let mapping = node.as_mapping().expect("should be a mapping");
+
+        let duplicate_keys = mapping.duplicate_keys();
+
+        assert_eq!(duplicate_keys.len(), 1);
+        assert_eq!(duplicate_keys[0].key, "name");
+        assert_eq!(
+            duplicate_keys[0].spans,
+            vec![
+                Some(SourceSpan { start: 10, end: 14 }),
+                Some(SourceSpan { start: 20, end: 24 }),
+            ]
+        );
     }
 
     #[test]
