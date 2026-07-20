@@ -31,6 +31,8 @@ dist/
 .python-version
 ## uv
 uv.lock
+## git worktrees
+.worktrees/
 ## direnv
 .envrc
 ## .vscode/*
