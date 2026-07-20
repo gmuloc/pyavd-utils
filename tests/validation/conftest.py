@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from pyavd_utils.validation import init_store_from_file
+from pyavd_utils.schema_store import init_store_from_file
 
 ADV_SCHEMA_URL = "https://github.com/aristanetworks/avd/releases/download/v6.0.0-dev3/schemas.json.gz"
 

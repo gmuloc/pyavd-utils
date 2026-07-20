@@ -51,14 +51,8 @@ include = ["pyavd_utils"]
 "pyavd_utils" = ["*.pyi", "THIRD_PARTY_LICENSES.txt"]
 
 [[tool.setuptools-rust.ext-modules]]
-target = "pyavd_utils.passwords"
-path = "rust/pypasswords/Cargo.toml"
-binding = "PyO3"
-args = ["--locked"]
-
-[[tool.setuptools-rust.ext-modules]]
-target = "pyavd_utils.validation"
-path = "rust/pyvalidation/Cargo.toml"
+target = "pyavd_utils._bindings"
+path = "rust/python_bindings/Cargo.toml"
 binding = "PyO3"
 args = ["--locked"]
 

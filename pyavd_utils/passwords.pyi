@@ -52,7 +52,7 @@ def cbc_decrypt(key: str, encrypted_data: str) -> str:
       RunTimeError: If anything fails during decryption.
     """
 
-def cbc_verify(key: str, encrypted_data: str) -> str:
+def cbc_verify(key: str, encrypted_data: str) -> bool:
     """
     Verify if an encrypted password is decryptable with the given key.
 

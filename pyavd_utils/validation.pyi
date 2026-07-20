@@ -77,7 +77,9 @@ class ValidatedDataResult:
 
 def init_store_from_file(file: Path) -> None:
     """
-    Initialize the Schema store from a file containing the full schema store.
+    Deprecated. Use pyavd_utils.schema_store.init_store_from_file instead.
+
+    Initialize the shared Schema store from a file containing the full schema store.
 
     Usually this is the schema.json.gz file built with pyavd.
     This must be called before running any validations, since the store is a write-once static.
