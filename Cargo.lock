@@ -1846,6 +1846,7 @@ dependencies = [
 name = "test_schema_store"
 version = "0.0.0"
 dependencies = [
+ "pyo3",
  "reqwest",
 ]
 

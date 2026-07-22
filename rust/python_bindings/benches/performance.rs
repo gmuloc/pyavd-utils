@@ -3,11 +3,10 @@
 // that can be found in the LICENSE file.
 //! Criterion benchmarks.
 #![allow(
+    clippy::unwrap_used,
     missing_docs,
-    reason = "criterion_group generates an undocumented benchmark entrypoint function"
+    reason = "criterion_group generates an undocumented entrypoint, and benchmarks fail fast with unwrap during setup"
 )]
-
-use std::sync::Once;
 
 use avdschema::Load as _;
 use avdschema::Store;
@@ -20,24 +19,6 @@ use python_bindings::bindings;
 use test_schema_store::get_store_gz_path;
 
 const TEST_DATA: &str = r#"{"fabric_name":"foo","type":"l3ls-evpn"}"#;
-
-static INIT_PY: Once = Once::new();
-
-fn setup_python_with_store() {
-    INIT_PY.call_once(|| {
-        pyo3::append_to_inittab!(bindings);
-        pyo3::Python::initialize();
-        pyo3::Python::attach(|py| {
-            let module = py.import("_bindings").unwrap();
-            let kwargs = PyDict::new(py);
-            let file = py.detach(get_store_gz_path);
-            kwargs.set_item("file", file).unwrap();
-            module
-                .call_method("init_store_from_file", (), Some(&kwargs))
-                .unwrap();
-        });
-    });
-}
 
 fn benchmark_load_and_resolve_store(criterion: &mut Criterion) {
     let schema_file = get_store_gz_path();
@@ -53,7 +34,7 @@ fn benchmark_load_and_resolve_store(criterion: &mut Criterion) {
 }
 
 fn benchmark_get_validated_data(criterion: &mut Criterion) {
-    setup_python_with_store();
+    test_schema_store::setup_python_with_store(|| pyo3::append_to_inittab!(bindings));
     criterion.bench_function("get_validated_data", |bencher| {
         pyo3::Python::attach(|py| {
             let module = py.import("_bindings").unwrap();
