@@ -49,14 +49,14 @@
       "commitMessagePrefix": "Bump(rust): "
     },
     {
-      "description": "Maintain the pinned Rust toolchain",
+      "description": "Update the pinned Rust toolchain",
       "matchManagers": [
         "rust-toolchain"
       ],
       "matchDepTypes": [
         "toolchain"
       ],
-      "rangeStrategy": "pin",
+      "rangeStrategy": "replace",
       "semanticCommitType": "chore",
       "commitMessagePrefix": "Bump(rust): "
     }
