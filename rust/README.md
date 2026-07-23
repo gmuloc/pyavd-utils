@@ -13,7 +13,7 @@ validation["crate validation"]
 avdschema["crate avdschema"]
 validation --->|depends on| avdschema
 passwords["crate passwords"]
-python_bindings["crate python_bindings"]
+python_bindings["crate python-bindings"]
 python_bindings --->|depends on| avdschema
 python_bindings --->|depends on| validation
 python_bindings --->|depends on| passwords

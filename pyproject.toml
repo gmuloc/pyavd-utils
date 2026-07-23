@@ -52,7 +52,7 @@ include = ["pyavd_utils"]
 
 [[tool.setuptools-rust.ext-modules]]
 target = "pyavd_utils._bindings"
-path = "rust/python_bindings/Cargo.toml"
+path = "rust/python-bindings/Cargo.toml"
 binding = "PyO3"
 args = ["--locked"]
 
