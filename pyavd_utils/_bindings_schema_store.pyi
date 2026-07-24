@@ -1,6 +1,8 @@
 # Copyright (c) 2026 Arista Networks, Inc.
 # Use of this source code is governed by the Apache License 2.0
 # that can be found in the LICENSE file.
+# Including docstrings since that is why we want this.
+# ruff: noqa: PYI021
 from pathlib import Path
 
 def init_store_from_file(file: Path) -> None:
