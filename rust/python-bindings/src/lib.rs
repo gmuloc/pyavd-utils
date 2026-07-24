@@ -31,50 +31,40 @@ mod validation;
 pub mod bindings {
     use super::*;
 
-    #[pymodule_export]
-    use super::passwords_module as passwords;
-    #[pymodule_export]
-    use super::schema_store_module as schema_store;
-    #[pymodule_export]
-    use super::validation_module as validation;
-
     #[pymodule_init]
     fn init(_module: &Bound<'_, PyModule>) -> PyResult<()> {
         pyo3_log::init();
         debug!("initialized pyavd_utils._bindings");
         Ok(())
     }
-}
 
-#[pymodule(module = "_bindings")]
-#[pyo3(name = "schema_store")]
-mod schema_store_module {
-    #[pymodule_export]
-    use super::schema_store::init_store_from_file;
-}
+    #[pymodule(module = "_bindings")]
+    mod schema_store {
+        #[pymodule_export]
+        use crate::schema_store::init_store_from_file;
+    }
 
-#[pymodule(module = "_bindings")]
-#[pyo3(name = "validation")]
-mod validation_module {
-    #[pymodule_export]
-    use super::validation::{
-        Configuration, Deprecation, IgnoredEosConfigKey, ValidatedDataResult, ValidationResult,
-        Violation, get_validated_data, validate_json, validate_json_with_adhoc_schema,
-    };
-}
+    #[pymodule(module = "_bindings")]
+    mod validation {
+        #[pymodule_export]
+        use crate::validation::{
+            Configuration, Deprecation, IgnoredEosConfigKey, ValidatedDataResult, ValidationResult,
+            Violation, get_validated_data, validate_json, validate_json_with_adhoc_schema,
+        };
+    }
 
-#[pymodule(module = "_bindings")]
-#[pyo3(name = "passwords")]
-mod passwords_module {
-    #[cfg(feature = "sha512")]
-    #[pymodule_export]
-    use super::passwords::sha512_crypt;
-    #[cfg(feature = "cbc")]
-    #[pymodule_export]
-    use super::passwords::{cbc_decrypt, cbc_encrypt, cbc_verify};
-    #[cfg(feature = "simple-7")]
-    #[pymodule_export]
-    use super::passwords::{simple_7_decrypt, simple_7_encrypt};
+    #[pymodule(module = "_bindings")]
+    mod passwords {
+        #[cfg(feature = "sha512")]
+        #[pymodule_export]
+        use crate::passwords::sha512_crypt;
+        #[cfg(feature = "cbc")]
+        #[pymodule_export]
+        use crate::passwords::{cbc_decrypt, cbc_encrypt, cbc_verify};
+        #[cfg(feature = "simple-7")]
+        #[pymodule_export]
+        use crate::passwords::{simple_7_decrypt, simple_7_encrypt};
+    }
 }
 
 #[cfg(test)]

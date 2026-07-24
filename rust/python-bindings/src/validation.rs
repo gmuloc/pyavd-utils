@@ -28,14 +28,14 @@ pub(crate) fn first_input_diagnostic_as_pyerr(
     })
 }
 
-#[pyclass(from_py_object, frozen, get_all)]
+#[pyclass(module = "_bindings.validation", from_py_object, frozen, get_all)]
 #[derive(Clone)]
 pub(crate) struct Violation {
     pub message: String,
     pub path: Vec<String>,
 }
 
-#[pyclass(from_py_object, frozen, get_all)]
+#[pyclass(module = "_bindings.validation", from_py_object, frozen, get_all)]
 #[derive(Clone)]
 pub(crate) struct Deprecation {
     pub message: String,
@@ -46,14 +46,14 @@ pub(crate) struct Deprecation {
     pub url: Option<String>,
 }
 
-#[pyclass(from_py_object, frozen, get_all)]
+#[pyclass(module = "_bindings.validation", from_py_object, frozen, get_all)]
 #[derive(Clone)]
 pub(crate) struct IgnoredEosConfigKey {
     pub message: String,
     pub path: Vec<String>,
 }
 
-#[pyclass(from_py_object, get_all, set_all)]
+#[pyclass(module = "_bindings.validation", from_py_object, get_all, set_all)]
 #[derive(Clone, Default)]
 pub(crate) struct Configuration {
     pub ignore_required_keys_on_root_dict: bool,
@@ -93,7 +93,7 @@ impl From<Configuration> for ::validation::Configuration {
     }
 }
 
-#[pyclass(from_py_object, frozen, get_all)]
+#[pyclass(module = "_bindings.validation", from_py_object, frozen, get_all)]
 #[derive(Clone, Default)]
 pub(crate) struct ValidationResult {
     pub violations: Vec<Violation>,
@@ -145,7 +145,7 @@ impl ValidationResult {
     }
 }
 
-#[pyclass(frozen, get_all)]
+#[pyclass(module = "_bindings.validation", frozen, get_all)]
 pub(crate) struct ValidatedDataResult {
     pub validation_result: ValidationResult,
     pub validated_data: Option<String>,
