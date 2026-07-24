@@ -2,6 +2,10 @@
 // Use of this source code is governed by the Apache License 2.0
 // that can be found in the LICENSE file.
 
+use ::validation::Context;
+use ::validation::StoreValidateInput as _;
+use ::validation::Validation as _;
+use ::validation::feedback::InputDiagnostic;
 use avdschema::any::AnySchema;
 use log::debug;
 use pyo3::PyResult;
@@ -9,12 +13,8 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass;
 use pyo3::pyfunction;
 use pyo3::pymethods;
-use validation::Context;
-use validation::StoreValidateInput as _;
-use validation::Validation as _;
-use validation::feedback::InputDiagnostic;
 
-use crate::schema_store_impl::get_store;
+use crate::schema_store::get_store;
 
 fn invalid_json_in_data_err(message: impl std::fmt::Display) -> pyo3::PyErr {
     PyRuntimeError::new_err(format!("Invalid JSON in data: {message}"))
@@ -81,7 +81,7 @@ impl Configuration {
     }
 }
 
-impl From<Configuration> for validation::Configuration {
+impl From<Configuration> for ::validation::Configuration {
     fn from(config: Configuration) -> Self {
         Self {
             ignore_required_keys_on_root_dict: config.ignore_required_keys_on_root_dict,
@@ -103,18 +103,18 @@ pub(crate) struct ValidationResult {
 
 impl ValidationResult {
     pub(crate) fn from_validation_result(
-        value: validation::ValidationResult,
+        value: ::validation::ValidationResult,
     ) -> PyResult<ValidationResult> {
         let mut result = ValidationResult::default();
         for feedback in value.errors {
             match feedback.issue {
-                validation::feedback::ErrorIssue::Violation(violation) => {
+                ::validation::feedback::ErrorIssue::Violation(violation) => {
                     result.violations.push(Violation {
                         message: violation.to_string(),
                         path: feedback.path.into(),
                     });
                 }
-                validation::feedback::ErrorIssue::InternalError { message } => {
+                ::validation::feedback::ErrorIssue::InternalError { message } => {
                     return Err(PyRuntimeError::new_err(format!(
                         "Error occurred during validation: {message}"
                     )));
@@ -123,7 +123,7 @@ impl ValidationResult {
         }
         for feedback in value.warnings {
             match feedback.issue {
-                validation::feedback::WarningIssue::Deprecated(deprecated) => {
+                ::validation::feedback::WarningIssue::Deprecated(deprecated) => {
                     result.deprecations.push(Deprecation {
                         message: deprecated.to_string(),
                         path: feedback.path.into(),
@@ -133,7 +133,7 @@ impl ValidationResult {
                         url: deprecated.url.into(),
                     });
                 }
-                validation::feedback::WarningIssue::IgnoredEosConfigKey(ignored) => {
+                ::validation::feedback::WarningIssue::IgnoredEosConfigKey(ignored) => {
                     result.ignored_eos_config_keys.push(IgnoredEosConfigKey {
                         message: ignored.to_string(),
                         path: feedback.path.into(),
@@ -180,7 +180,7 @@ pub(crate) fn get_validated_data(
 ) -> PyResult<ValidatedDataResult> {
     debug!("python_bindings::get_validated_data Begin");
     let result: PyResult<ValidatedDataResult> = py.detach(|| {
-        let mut config: validation::Configuration =
+        let mut config: ::validation::Configuration =
             configuration.map(Into::into).unwrap_or_default();
         config.return_coerced_data = true;
         let output = get_store()?
@@ -226,7 +226,7 @@ pub(crate) fn validate_json_with_adhoc_schema(
     let data: serde_json::Value =
         serde_json::from_str(data_as_json).map_err(invalid_json_in_data_err)?;
 
-    let config: Option<validation::Configuration> = configuration.map(Into::into);
+    let config: Option<::validation::Configuration> = configuration.map(Into::into);
     let mut ctx = Context::new(get_store()?, config.as_ref());
     let _ = schema.validate(&data, &mut ctx);
 

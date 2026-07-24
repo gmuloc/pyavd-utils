@@ -6,8 +6,8 @@ use pyo3::types::PyAnyMethods as _;
 
 use super::get_path_and_message_from_py_violation;
 use super::setup;
-use crate::validation_impl::ValidationResult;
-use crate::validation_impl::first_input_diagnostic_as_pyerr;
+use crate::validation::ValidationResult;
+use crate::validation::first_input_diagnostic_as_pyerr;
 
 #[test]
 fn validation_result_from_validation_result_maps_violation() {

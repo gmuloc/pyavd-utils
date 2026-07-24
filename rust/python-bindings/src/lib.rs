@@ -22,9 +22,9 @@ use pyo3::PyResult;
 use pyo3::pymodule;
 use pyo3::types::PyModule;
 
-mod passwords_impl;
-mod schema_store_impl;
-mod validation_impl;
+mod passwords;
+mod schema_store;
+mod validation;
 
 #[pymodule]
 #[pyo3(name = "_bindings")]
@@ -32,11 +32,11 @@ pub mod bindings {
     use super::*;
 
     #[pymodule_export]
-    use super::passwords;
+    use super::passwords_module as passwords;
     #[pymodule_export]
-    use super::schema_store;
+    use super::schema_store_module as schema_store;
     #[pymodule_export]
-    use super::validation;
+    use super::validation_module as validation;
 
     #[pymodule_init]
     fn init(_module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -47,31 +47,34 @@ pub mod bindings {
 }
 
 #[pymodule(module = "_bindings")]
-mod schema_store {
+#[pyo3(name = "schema_store")]
+mod schema_store_module {
     #[pymodule_export]
-    use super::schema_store_impl::init_store_from_file;
+    use super::schema_store::init_store_from_file;
 }
 
 #[pymodule(module = "_bindings")]
-mod validation {
+#[pyo3(name = "validation")]
+mod validation_module {
     #[pymodule_export]
-    use super::validation_impl::{
+    use super::validation::{
         Configuration, Deprecation, IgnoredEosConfigKey, ValidatedDataResult, ValidationResult,
         Violation, get_validated_data, validate_json, validate_json_with_adhoc_schema,
     };
 }
 
 #[pymodule(module = "_bindings")]
-mod passwords {
+#[pyo3(name = "passwords")]
+mod passwords_module {
     #[cfg(feature = "sha512")]
     #[pymodule_export]
-    use super::passwords_impl::sha512_crypt;
+    use super::passwords::sha512_crypt;
     #[cfg(feature = "cbc")]
     #[pymodule_export]
-    use super::passwords_impl::{cbc_decrypt, cbc_encrypt, cbc_verify};
+    use super::passwords::{cbc_decrypt, cbc_encrypt, cbc_verify};
     #[cfg(feature = "simple-7")]
     #[pymodule_export]
-    use super::passwords_impl::{simple_7_decrypt, simple_7_encrypt};
+    use super::passwords::{simple_7_decrypt, simple_7_encrypt};
 }
 
 #[cfg(test)]
