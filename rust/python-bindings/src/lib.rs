@@ -26,7 +26,7 @@ mod passwords;
 mod schema_store;
 mod validation;
 
-#[pymodule(gil_used = false)]
+#[pymodule]
 #[pyo3(name = "_bindings")]
 pub fn bindings(module: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3_log::init();
