@@ -4,7 +4,7 @@
 
 use pyo3::types::PyAnyMethods as _;
 
-use super::super::setup_python;
+use crate::tests::setup_python;
 
 #[test]
 fn cbc_decrypt_invalid_base64_err() {
