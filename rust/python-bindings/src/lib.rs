@@ -23,8 +23,9 @@ mod validation;
 #[pyo3::pymodule]
 pub mod _bindings {
     use log::debug;
+    use pyo3::Bound;
+    use pyo3::PyResult;
     use pyo3::types::PyModule;
-    use pyo3::{Bound, PyResult};
 
     #[pymodule_init]
     fn init(_module: &Bound<'_, PyModule>) -> PyResult<()> {
