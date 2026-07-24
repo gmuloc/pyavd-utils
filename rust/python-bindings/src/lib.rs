@@ -16,19 +16,15 @@
     reason = "PyO3-facing API names and test assertions mirror the exported Python module contract"
 )]
 
-use log::debug;
-use pyo3::Bound;
-use pyo3::PyResult;
-use pyo3::pymodule;
-use pyo3::types::PyModule;
-
 mod passwords;
 mod schema_store;
 mod validation;
 
-#[pymodule]
+#[pyo3::pymodule]
 pub mod _bindings {
-    use super::*;
+    use log::debug;
+    use pyo3::types::PyModule;
+    use pyo3::{Bound, PyResult};
 
     #[pymodule_init]
     fn init(_module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -37,13 +33,13 @@ pub mod _bindings {
         Ok(())
     }
 
-    #[pymodule]
+    #[pyo3::pymodule]
     mod schema_store {
         #[pymodule_export]
         use crate::schema_store::init_store_from_file;
     }
 
-    #[pymodule]
+    #[pyo3::pymodule]
     mod validation {
         #[pymodule_export]
         use crate::validation::Configuration;
@@ -65,7 +61,7 @@ pub mod _bindings {
         use crate::validation::validate_json_with_adhoc_schema;
     }
 
-    #[pymodule]
+    #[pyo3::pymodule]
     mod passwords {
         #[cfg(feature = "cbc")]
         #[pymodule_export]
