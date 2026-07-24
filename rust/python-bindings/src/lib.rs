@@ -27,8 +27,7 @@ mod schema_store;
 mod validation;
 
 #[pymodule]
-#[pyo3(name = "_bindings")]
-pub mod bindings {
+pub mod _bindings {
     use super::*;
 
     #[pymodule_init]
@@ -38,13 +37,13 @@ pub mod bindings {
         Ok(())
     }
 
-    #[pymodule(module = "_bindings")]
+    #[pymodule]
     mod schema_store {
         #[pymodule_export]
         use crate::schema_store::init_store_from_file;
     }
 
-    #[pymodule(module = "_bindings")]
+    #[pymodule]
     mod validation {
         #[pymodule_export]
         use crate::validation::Configuration;
@@ -66,7 +65,7 @@ pub mod bindings {
         use crate::validation::validate_json_with_adhoc_schema;
     }
 
-    #[pymodule(module = "_bindings")]
+    #[pymodule]
     mod passwords {
         #[cfg(feature = "cbc")]
         #[pymodule_export]

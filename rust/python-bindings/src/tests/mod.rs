@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 use pyo3::types::PyAnyMethods as _;
 use pyo3::types::PyDict;
 
-use crate::bindings;
+use crate::_bindings;
 
 mod passwords;
 mod validation;
@@ -17,7 +17,7 @@ static INIT_STORE: OnceLock<()> = OnceLock::new();
 
 fn setup_python() {
     INIT_PY.get_or_init(|| {
-        pyo3::append_to_inittab!(bindings);
+        pyo3::append_to_inittab!(_bindings);
         pyo3::Python::initialize();
     });
 }

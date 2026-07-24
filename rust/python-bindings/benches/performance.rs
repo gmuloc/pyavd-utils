@@ -17,7 +17,7 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use pyo3::types::PyAnyMethods as _;
 use pyo3::types::PyDict;
-use python_bindings::bindings;
+use python_bindings::_bindings;
 use test_schema_store::get_store_gz_path;
 
 const TEST_DATA: &str = r#"{"fabric_name":"foo","type":"l3ls-evpn"}"#;
@@ -27,7 +27,7 @@ static INIT_STORE: OnceLock<()> = OnceLock::new();
 
 fn setup_python_with_store() {
     INIT_PY.get_or_init(|| {
-        pyo3::append_to_inittab!(bindings);
+        pyo3::append_to_inittab!(_bindings);
         pyo3::Python::initialize();
     });
     INIT_STORE.get_or_init(|| {
