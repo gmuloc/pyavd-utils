@@ -3,7 +3,14 @@
 # that can be found in the LICENSE file.
 from __future__ import annotations
 
-from ._bindings import cbc_decrypt, cbc_encrypt, cbc_verify, sha512_crypt, simple_7_decrypt, simple_7_encrypt
+from ._bindings import passwords as _passwords
+
+cbc_decrypt = _passwords.cbc_decrypt
+cbc_encrypt = _passwords.cbc_encrypt
+cbc_verify = _passwords.cbc_verify
+sha512_crypt = _passwords.sha512_crypt
+simple_7_decrypt = _passwords.simple_7_decrypt
+simple_7_encrypt = _passwords.simple_7_encrypt
 
 __all__ = [
     "cbc_decrypt",

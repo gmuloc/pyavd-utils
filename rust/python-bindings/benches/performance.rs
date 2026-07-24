@@ -32,7 +32,11 @@ fn setup_python_with_store() {
     });
     INIT_STORE.get_or_init(|| {
         pyo3::Python::attach(|py| {
-            let module = py.import("_bindings").unwrap();
+            let module = py
+                .import("_bindings")
+                .unwrap()
+                .getattr("schema_store")
+                .unwrap();
             let kwargs = PyDict::new(py);
             let file = py.detach(get_store_gz_path);
             kwargs.set_item("file", file).unwrap();
@@ -60,7 +64,11 @@ fn benchmark_get_validated_data(criterion: &mut Criterion) {
     setup_python_with_store();
     criterion.bench_function("get_validated_data", |bencher| {
         pyo3::Python::attach(|py| {
-            let module = py.import("_bindings").unwrap();
+            let module = py
+                .import("_bindings")
+                .unwrap()
+                .getattr("validation")
+                .unwrap();
             bencher.iter(|| {
                 let kwargs = PyDict::new(py);
                 kwargs

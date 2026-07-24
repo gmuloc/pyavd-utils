@@ -4,21 +4,17 @@
 
 use avdschema::any::AnySchema;
 use log::debug;
-use pyo3::Bound;
 use pyo3::PyResult;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass;
 use pyo3::pyfunction;
 use pyo3::pymethods;
-use pyo3::types::PyModule;
-use pyo3::types::PyModuleMethods as _;
-use pyo3::wrap_pyfunction;
 use validation::Context;
 use validation::StoreValidateInput as _;
 use validation::Validation as _;
 use validation::feedback::InputDiagnostic;
 
-use crate::schema_store::get_store;
+use crate::schema_store_impl::get_store;
 
 fn invalid_json_in_data_err(message: impl std::fmt::Display) -> pyo3::PyErr {
     PyRuntimeError::new_err(format!("Invalid JSON in data: {message}"))
@@ -235,17 +231,4 @@ pub(crate) fn validate_json_with_adhoc_schema(
     let _ = schema.validate(&data, &mut ctx);
 
     ValidationResult::from_validation_result(ctx.result)
-}
-
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_class::<Configuration>()?;
-    module.add_class::<Deprecation>()?;
-    module.add_class::<IgnoredEosConfigKey>()?;
-    module.add_class::<ValidatedDataResult>()?;
-    module.add_class::<ValidationResult>()?;
-    module.add_class::<Violation>()?;
-    module.add_function(wrap_pyfunction!(validate_json, module)?)?;
-    module.add_function(wrap_pyfunction!(get_validated_data, module)?)?;
-    module.add_function(wrap_pyfunction!(validate_json_with_adhoc_schema, module)?)?;
-    Ok(())
 }

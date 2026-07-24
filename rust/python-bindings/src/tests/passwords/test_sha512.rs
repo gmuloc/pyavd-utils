@@ -10,7 +10,11 @@ use crate::tests::setup_python;
 fn sha512_crypt_valid_hash_with_salt_ok() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let result = {
             let args = ();
             let kwargs = pyo3::types::PyDict::new(py);
@@ -32,7 +36,11 @@ fn sha512_crypt_valid_hash_with_salt_ok() {
 fn sha512_crypt_empty_salt_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("sha512_crypt", ("arista", ""))
             .unwrap_err();
@@ -49,7 +57,11 @@ fn sha512_crypt_empty_salt_err() {
 fn sha512_crypt_invalid_character_in_salt_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("sha512_crypt", ("arista", "#"))
             .unwrap_err();

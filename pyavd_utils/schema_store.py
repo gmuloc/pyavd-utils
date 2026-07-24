@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 from __future__ import annotations
 
-from ._bindings import init_store_from_file
+from ._bindings import schema_store as _schema_store
+
+init_store_from_file = _schema_store.init_store_from_file
 
 __all__ = ["init_store_from_file"]

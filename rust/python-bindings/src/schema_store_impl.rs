@@ -8,13 +8,9 @@ use std::sync::OnceLock;
 use avdschema::Load as _;
 use avdschema::Store;
 use log::info;
-use pyo3::Bound;
 use pyo3::PyResult;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyfunction;
-use pyo3::types::PyModule;
-use pyo3::types::PyModuleMethods as _;
-use pyo3::wrap_pyfunction;
 
 pub(crate) static STORE: OnceLock<Store> = OnceLock::new();
 
@@ -50,9 +46,4 @@ pub(crate) fn init_store_from_file(file: PathBuf) -> PyResult<()> {
                 .to_owned(),
         )
     }).inspect(|()| info!("Initialized the schema store from file."))
-}
-
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_function(wrap_pyfunction!(init_store_from_file, module)?)?;
-    Ok(())
 }

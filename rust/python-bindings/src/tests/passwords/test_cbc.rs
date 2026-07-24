@@ -10,7 +10,11 @@ use crate::tests::setup_python;
 fn cbc_decrypt_invalid_base64_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("cbc_decrypt", ("passwd", "ThisIsNotBase64!!!"))
             .unwrap_err();
@@ -24,7 +28,11 @@ fn cbc_decrypt_invalid_base64_err() {
 fn cbc_decrypt_failed_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("cbc_decrypt", ("any_key", "YWJjZA=="))
             .unwrap_err();
@@ -41,7 +49,11 @@ fn cbc_decrypt_failed_err() {
 fn cbc_decrypt_invalid_signature_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("cbc_decrypt", ("some_key", "YWFhYWFhYWFhYWFhYWFhYQ=="))
             .unwrap_err();
@@ -58,7 +70,11 @@ fn cbc_decrypt_invalid_signature_err() {
 fn cbc_verify_returns_bool() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let key = "42.42.42.42";
         let data = "arista";
 

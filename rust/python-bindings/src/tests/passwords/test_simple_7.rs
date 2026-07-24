@@ -10,7 +10,11 @@ use crate::tests::setup_python;
 fn simple_7_encrypt_py_ok() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let encrypted = {
             let args = ();
             let kwargs = pyo3::types::PyDict::new(py);
@@ -28,7 +32,11 @@ fn simple_7_encrypt_py_ok() {
 fn simple_7_encrypt_decrypt_roundtrip() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let password = "test_password";
         let encrypted: String = module
             .call_method1("simple_7_encrypt", (password, Some(5_u8)))
@@ -49,7 +57,11 @@ fn simple_7_encrypt_decrypt_roundtrip() {
 fn simple_7_encrypt_with_random_salt() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let password = "test_password";
         let encrypted: String = module
             .call_method1("simple_7_encrypt", (password, py.None()))
@@ -70,7 +82,11 @@ fn simple_7_encrypt_with_random_salt() {
 fn simple_7_encrypt_empty_password_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("simple_7_encrypt", ("", Some(5_u8)))
             .unwrap_err();
@@ -84,7 +100,11 @@ fn simple_7_encrypt_empty_password_err() {
 fn simple_7_encrypt_invalid_salt_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("simple_7_encrypt", ("test_password", Some(16_u8)))
             .unwrap_err();
@@ -101,7 +121,11 @@ fn simple_7_encrypt_invalid_salt_err() {
 fn simple_7_decrypt_data_too_short_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module.call_method1("simple_7_decrypt", ("0",)).unwrap_err();
 
         assert!(err.is_instance_of::<pyo3::exceptions::PyValueError>(py));
@@ -116,7 +140,11 @@ fn simple_7_decrypt_data_too_short_err() {
 fn simple_7_decrypt_invalid_hex_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("simple_7_decrypt", ("01GGGG",))
             .unwrap_err();
@@ -130,7 +158,11 @@ fn simple_7_decrypt_invalid_hex_err() {
 fn simple_7_decrypt_invalid_salt_format_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("simple_7_decrypt", ("XX1234",))
             .unwrap_err();
@@ -144,7 +176,11 @@ fn simple_7_decrypt_invalid_salt_format_err() {
 fn simple_7_decrypt_salt_out_of_range_err() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let err = module
             .call_method1("simple_7_decrypt", ("161234",))
             .unwrap_err();
@@ -161,7 +197,11 @@ fn simple_7_decrypt_salt_out_of_range_err() {
 fn simple_7_known_values() {
     setup_python();
     pyo3::Python::attach(|py| {
-        let module = py.import("_bindings").unwrap();
+        let module = py
+            .import("_bindings")
+            .unwrap()
+            .getattr("passwords")
+            .unwrap();
         let test_cases: [(u8, &str, &str); 4] = [
             (1, "foo", "0115090B"),
             (6, "foo", "0600002E"),

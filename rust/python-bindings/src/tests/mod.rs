@@ -26,7 +26,11 @@ fn setup() {
     setup_python();
     INIT_STORE.get_or_init(|| {
         pyo3::Python::attach(|py| {
-            let module = py.import("_bindings").unwrap();
+            let module = py
+                .import("_bindings")
+                .unwrap()
+                .getattr("schema_store")
+                .unwrap();
             let kwargs = PyDict::new(py);
             let file = py.detach(test_schema_store::get_store_gz_path);
             kwargs.set_item("file", file).unwrap();
