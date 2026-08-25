@@ -8,6 +8,7 @@ license.workspace = true
 workspace = true
 
 [dev-dependencies]
+criterion = { workspace = true }
 test_schema_store = { path = "../test_schema_store" }
 
 [dependencies]
@@ -29,3 +30,8 @@ xz2 = { version = "0.1.7", optional = true }
 [features]
 dump_load_files = ["dep:walkdir"]
 xz2 = ["dump_load_files", "dep:xz2"]
+
+[[bench]]
+name = "performance"
+harness = false
+required-features = ["dump_load_files"]

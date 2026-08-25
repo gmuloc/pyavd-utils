@@ -7,6 +7,11 @@ license.workspace = true
 [lints]
 workspace = true
 
+[dev-dependencies]
+avdschema = { path = "../avdschema", features = ["dump_load_files"] }
+criterion = { workspace = true }
+test_schema_store = { path = "../test_schema_store" }
+
 [dependencies]
 avdschema = { path = "../avdschema" }
 derive_more = { workspace = true, features = ["display", "from"] }
@@ -21,3 +26,7 @@ yaml-parser = { path = "../yaml-parser", features = ["avdschema"] }
 
 [lib]
 crate-type = ["cdylib", "lib"]
+
+[[bench]]
+name = "performance"
+harness = false
