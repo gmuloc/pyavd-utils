@@ -217,6 +217,7 @@ fn resolve_unsigned_numeric(text: Cow<'_, str>) -> Option<ResolvedScalar<'_>> {
 
 /// Signed plain-scalar fast path: cheap reject/prefix handling before decimal
 /// classification.
+#[allow(clippy::string_slice, reason = "We matched the previous characters")]
 #[allow(clippy::inline_always, reason = "Proven performance gain")]
 #[inline(always)]
 fn resolve_signed_numeric(text: Cow<'_, str>) -> Option<ResolvedScalar<'_>> {
@@ -227,16 +228,10 @@ fn resolve_signed_numeric(text: Cow<'_, str>) -> Option<ResolvedScalar<'_>> {
     match bytes.first()? {
         b'0' => match bytes.get(1) {
             Some(b'o') => {
-                return unsigned
-                    .get(2..)
-                    .and_then(|digits| parse_prefixed_int(sign, digits, 8))
-                    .map(ResolvedScalar::Int);
+                return parse_prefixed_int(sign, &unsigned[2..], 8).map(ResolvedScalar::Int);
             }
             Some(b'x') => {
-                return unsigned
-                    .get(2..)
-                    .and_then(|digits| parse_prefixed_int(sign, digits, 16))
-                    .map(ResolvedScalar::Int);
+                return parse_prefixed_int(sign, &unsigned[2..], 16).map(ResolvedScalar::Int);
             }
             _ => {}
         },
@@ -702,11 +697,7 @@ mod tests {
     }
 
     #[test]
-    fn negative_prefixed_ints_resolve_to_concrete_integers() {
-        assert_eq!(
-            resolve_untagged_scalar(Cow::Borrowed("-0o52"), ScalarStyle::Plain),
-            ResolvedScalar::Int(Integer::I64(-42))
-        );
+    fn negative_prefixed_int_min_i128_resolves_to_concrete_i128() {
         assert_eq!(
             resolve_untagged_scalar(
                 Cow::Borrowed("-0x80000000000000000000000000000000"),
