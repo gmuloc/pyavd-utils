@@ -1,0 +1,36 @@
+---
+name: Partial rerun probe reusable
+
+"on":
+  workflow_call:
+    inputs:
+      role:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail two builds on the initial attempt
+        env:
+          ROLE: ${{ inputs.role }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          if [ "$ROLE" = persistent ] || { [ "$ROLE" = recoverable ] && [ "$ATTEMPT" = 1 ]; }; then
+            exit 1
+          fi
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["3.10", "3.14"]
+    steps:
+      - name: Represent the wheel test matrix
+        run: "true"

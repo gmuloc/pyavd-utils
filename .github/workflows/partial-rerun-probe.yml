@@ -1,0 +1,96 @@
+---
+name: Partial rerun probe
+
+"on":
+  push:
+    branches: [experiment/partial-rerun-probe]
+    paths: [.github/workflows/partial-rerun-probe*.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  simple_matrix:
+    name: Simple matrix (${{ matrix.role }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [recoverable, persistent, passing]
+    steps:
+      - name: Fail two legs on the initial attempt
+        env:
+          ROLE: ${{ matrix.role }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          if [ "$ROLE" = persistent ] || { [ "$ROLE" = recoverable ] && [ "$ATTEMPT" = 1 ]; }; then
+            exit 1
+          fi
+
+  simple_success:
+    needs: simple_matrix
+    runs-on: ubuntu-latest
+    steps:
+      - run: "true"
+
+  simple_gate:
+    needs: [simple_matrix, simple_success]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate the currently merged gate policy
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON"
+          echo "$NEEDS_JSON" | jq -e '.simple_matrix.result == "success"'
+
+  simple_guarded_gate:
+    needs: simple_success
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON"
+          echo "$NEEDS_JSON" | jq -e '.simple_success.result == "success"'
+
+  reusable_matrix:
+    name: Reusable matrix (${{ matrix.role }})
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [recoverable, persistent, passing]
+    uses: $/.github/workflows/partial-rerun-probe-reusable.yml
+    with:
+      role: ${{ matrix.role }}
+
+  reusable_success:
+    needs: reusable_matrix
+    runs-on: ubuntu-latest
+    steps:
+      - run: "true"
+
+  reusable_gate:
+    needs: [reusable_matrix, reusable_success]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate the currently merged gate policy
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON"
+          echo "$NEEDS_JSON" | jq -e '.reusable_matrix.result == "success"'
+
+  reusable_guarded_gate:
+    needs: reusable_success
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON"
+          echo "$NEEDS_JSON" | jq -e '.reusable_success.result == "success"'
