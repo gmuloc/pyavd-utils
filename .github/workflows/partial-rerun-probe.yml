@@ -34,7 +34,7 @@ jobs:
       - run: "true"
 
   simple_gate:
-    needs: [simple_matrix, simple_success]
+    needs: simple_matrix
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -73,7 +73,7 @@ jobs:
       - run: "true"
 
   reusable_gate:
-    needs: [reusable_matrix, reusable_success]
+    needs: reusable_matrix
     if: always()
     runs-on: ubuntu-latest
     steps:
